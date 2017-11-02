@@ -1,3 +1,4 @@
+# cython: profile=True
 r"""Riemann Theta Function :mod:`abelfunctions.riemann_theta.riemann_theta`
 =======================================================================
 
@@ -49,17 +50,17 @@ Contents
 cimport cython
 import numpy
 
-from libc.stdlib cimport malloc
+from libc.stdlib cimport malloc, free
 from radius import radius
 from integer_points import integer_points_python
 
 cdef extern from *:
     void finite_sum_without_derivatives(double*, double*, double*,
                                         double*, double*, double*,
-                                        double*, double*, int, int)
+                                        double*, double*, int, int, int)
     void finite_sum_with_derivatives(double*, double*, double*, double*,
                                      double*, double*, double*, double*,
-                                     double*, double*, int, int, int)
+                                     double*, double*, int, int, int, int)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -113,9 +114,12 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
     N = S.shape[0]
 
     # set up storage locations and vectors
-    real = <double*>malloc(sizeof(double))
-    imag = <double*>malloc(sizeof(double))
+    real = <double*>malloc(sizeof(double)*num_vectors)
+    imag = <double*>malloc(sizeof(double)*num_vectors)
     values = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+    x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+    y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
 
     # get the derivatives
     if len(derivs):
@@ -125,28 +129,23 @@ def oscillatory_part(z, Omega, epsilon, derivs, accuracy_radius, axis):
         derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
 
         # compute the finite sum for each z-vector
-        for k in range(num_vectors):
-            zk = z[k*g:(k+1)*g]
-            x = numpy.ascontiguousarray(zk.real, dtype=numpy.double)
-            y = numpy.ascontiguousarray(zk.imag, dtype=numpy.double)
-            finite_sum_with_derivatives(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],
-                                        &x[0], &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],
-                                        nderivs, g, N)
-            value = numpy.complex(real[0] + 1.0j*imag[0])
-            values[k] = value
+        finite_sum_with_derivatives(real, imag,
+                                    &X[0,0], &Yinv[0,0], &T[0,0],
+                                    &x[0], &y[0], &S[0,0],
+                                    &derivs_real[0], &derivs_imag[0],
+                                    nderivs, g, N, num_vectors)
     else:
         # compute the finite sum for each z-vector
-        for k in range(num_vectors):
-            zk = z[k*g:(k+1)*g]
-            x = numpy.ascontiguousarray(zk.real, dtype=numpy.double)
-            y = numpy.ascontiguousarray(zk.imag, dtype=numpy.double)
-            finite_sum_without_derivatives(real, imag,
-                                           &X[0,0], &Yinv[0,0], &T[0,0],
-                                           &x[0], &y[0], &S[0,0], g, N)
-            value = numpy.complex(real[0] + 1.0j*imag[0])
-            values[k] = value
+        finite_sum_without_derivatives(real, imag,
+                                       &x[0], &y[0], &X[0,0],
+                                       &Yinv[0,0], &T[0,0], &S[0,0],
+                                       g, N, num_vectors)
+
+    for k in range(num_vectors):
+      values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+    free(real)
+    free(imag)
 
     if num_vectors == 1:
         return values[0]
