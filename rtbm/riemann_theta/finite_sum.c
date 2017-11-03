@@ -472,36 +472,33 @@ deriv_prod(double* dpr, double* dpi,
 }
 
 /*
-    Phase II special
+    Phase I
 */
-    
-// Further optimization possible    
-    
 void
-deriv_prod_phaseII(double* dpr, double* dpi,
-           double* n,
+deriv_prod_phaseI(double* dpr, double* dpi,
+           double* n, double* intshift,
            double* deriv_real, double* deriv_imag, int nderivs,
            int g)
 {
-
-  double term_real, term_imag;
+  double nmintshift[g];
+  double term_real;
   double total_real, total_real_tmp;
-  double total_imag, total_imag_tmp;
+ 
   int i,j;
 
-  
+  // compute n-intshift
+  for (i = 0; i < g; i++)
+    nmintshift[i] = n[i] - intshift[i];
+
   /*
      Computes the dot product of each directional derivative and nmintshift.
      Then it computes the product of the resulting complex scalars.
   */
   total_real = 1;
-  total_imag = 0;
   for (i = 0; i < nderivs; i++) {
     term_real = 0;
-    term_imag = 0;
     for (j = 0; j < g; j++) {
-      term_real += deriv_real[j + g*i] * n[j];
-      term_imag += deriv_imag[j + g*i] * n[j];
+      term_real += deriv_real[j + g*i] * nmintshift[j];
     }
 
     /*
@@ -509,12 +506,11 @@ deriv_prod_phaseII(double* dpr, double* dpi,
       the previous terms. Total_real is the resulting real part of the sum, and
       total_imag is the resulting imaginary part.
     */
-    total_real_tmp = total_real * term_real - total_imag * term_imag;
-    total_imag_tmp = total_real * term_imag + total_imag * term_real;
-    total_real = total_real_tmp;
-    total_imag = total_imag_tmp;
+    total_real = total_real * term_real;
   }
-
+  
+  
+  
   // Compute (2*pi*i)^(nderivs) * (total_real + total_imag*i)
   double pi_mult = pow(2*M_PI, (double)nderivs);
 
@@ -524,18 +520,74 @@ deriv_prod_phaseII(double* dpr, double* dpi,
   */
   if (nderivs % 4 == 0) {
     dpr[0] = pi_mult * total_real;
-    dpi[0] = pi_mult * total_imag;
   }
   else if (nderivs % 4 == 1) {
-    dpr[0] = -pi_mult * total_imag;
     dpi[0] = pi_mult * total_real;
   }
   else if (nderivs % 4 == 2) {
     dpr[0] = -pi_mult * total_real;
-    dpi[0] = -pi_mult * total_imag;
   }
   else if (nderivs % 4 == 3) {
-    dpr[0] = pi_mult * total_imag;
+    dpi[0] = -pi_mult * total_real;
+  }
+}
+    
+    
+/*
+    Phase II 
+*/
+    
+void
+deriv_prod_phaseII(double* dpr, double* dpi,
+           double* n,
+           double* deriv_real, double* deriv_imag, int nderivs,
+           int g)
+{
+
+  double term_real;
+  double total_real, total_real_tmp;
+
+  int i,j;
+
+  
+  /*
+     Computes the dot product of each directional derivative and nmintshift.
+     Then it computes the product of the resulting complex scalars.
+  */
+  total_real = 1;
+ 
+  for (i = 0; i < nderivs; i++) {
+    term_real = 0;
+    for (j = 0; j < g; j++) {
+      term_real += deriv_real[j + g*(nderivs-1)] * n[j];
+    }
+
+    /*
+      Multiplies the dot product that was just computed with the product of all
+      the previous terms. Total_real is the resulting real part of the sum, and
+      total_imag is the resulting imaginary part.
+    */
+    total_real = total_real * term_real;// - total_imag * term_imag;
+  }
+  
+  
+  // Compute (2*pi*i)^(nderivs) * (total_real + total_imag*i)
+  double pi_mult = pow(2*M_PI, (double)nderivs);
+
+  /*
+    Determines what the result of i^nderivs is, and performs the correct
+    multiplication afterwards.
+  */
+  if (nderivs % 4 == 0) {
+    dpr[0] = pi_mult * total_real;
+  }
+  else if (nderivs % 4 == 1) {
+    dpi[0] = pi_mult * total_real;
+  }
+  else if (nderivs % 4 == 2) {
+    dpr[0] = -pi_mult * total_real;
+  }
+  else if (nderivs % 4 == 3) {
     dpi[0] = -pi_mult * total_real;
   }
 }
@@ -656,7 +708,6 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
   */
   for (int kk = 0; kk < num_vectors; kk++)
   {
-      double *x = &zr[kk*g];
       double *y = &zi[kk*g];
 
       int k,j;
@@ -694,7 +745,7 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
         
         npt = exp(normpart(n, T, fracshift, g));
           
-        deriv_prod(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
+        deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
         
         real_total += dpr[0] * npt;
         imag_total += dpi[0] * npt;

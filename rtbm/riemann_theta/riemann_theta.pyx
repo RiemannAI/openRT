@@ -218,7 +218,7 @@ cdef class RiemannTheta_Function(object):
 
         See :meth:`eval` for documentation.
         """
-        return self.eval(mode = 0, *args, **kwds)
+        return self.eval(*args, **kwds)
 
     def eval(self, z, Omega, mode = 0,**kwds):
         r"""Returns the value of the Riemann theta function at `z` and `Omega`.
