@@ -273,7 +273,11 @@ cdef class RiemannTheta_Function(object):
             The value of the log Riemann theta function at each `g`-component vector
             appearing in `z`.
         """
-        u = self.exponential_part(z, Omega, **kwds)
+        if(mode!=2):
+            u = self.exponential_part(z, Omega, **kwds)
+        else:
+            u = 0
+            
         v = self.oscillatory_part(z, Omega, mode, **kwds)
         values = u + numpy.log(v)
         return values

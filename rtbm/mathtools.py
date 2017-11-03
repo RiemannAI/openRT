@@ -60,8 +60,8 @@ def gradient_log_theta(v, q, d):
     D = np.zeros(Nh)
     D[d] = 1
 
-    R = RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, mode=0)
-    L = RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), derivs=[D], epsilon=RTBM_precision, mode=0)
+    R = RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), mode=0, epsilon=RTBM_precision)
+    L = RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), mode=0, derivs=[D], epsilon=RTBM_precision)
 
     return  (- np.exp(L-R) / (2.0j * np.pi))
 
@@ -78,8 +78,8 @@ def gradient_log_1d_theta_phaseI(v, q, d):
 
     re = np.divmod(v, q)
 
-    R = RiemannTheta(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, mode=1)
-    L = RiemannTheta(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, derivs=[D], mode=1)
+    R = RiemannTheta(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), mode=1, epsilon=RTBM_precision)
+    L = RiemannTheta(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), mode=1, epsilon=RTBM_precision, derivs=[D])
     #R = test(np.pi*v/(2j*np.pi),np.exp(-1j*np.pi*q[0,0]/(2j*np.pi)))
     #L = np.pi*testD(np.pi*v/(2j*np.pi),np.exp(-1j*np.pi*q[0,0]/(2j*np.pi)))
     #R = vfunc(3,np.pi*v/(2j*np.pi),np.exp(-1j*np.pi*q[0,0]/(2j*np.pi)))
@@ -122,14 +122,14 @@ def logtheta_1d_phaseI(v, q, d):
     if(d > 0):
         D = np.ones((1,d))
         
-        R = -d*np.log(((2j*np.pi))) + RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, derivs=D, mode=1)
+        R = -d*np.log(((2j*np.pi))) + RiemannTheta.log_eval(v / (2.0j * np.pi), -q / (2.0j * np.pi), mode=1, epsilon=RTBM_precision, derivs=D)
         
     else:
         # Make NaN safe via moving to fundamental box
         re = np.divmod(v, q)
       
         e = (np.asarray(re[0])*v -0.5*q[0,0]*np.asarray(re[0])**2)[:,0]
-        R = e + RiemannTheta.log_eval(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, mode=1)
+        R = e + RiemannTheta.log_eval(re[1] / (2.0j * np.pi), -q / (2.0j * np.pi), mode=1, epsilon=RTBM_precision)
        
     return R
 
