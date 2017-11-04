@@ -4,8 +4,11 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from mathtools import factorized_hidden_expectations,theta_1d,logtheta_1d_phaseI, logtheta_1d
+from riemann_theta.riemann_theta import RiemannTheta
 
 import time
+
+import matplotlib.pyplot as plt
 
 from multiprocessing import Pool
 pool = Pool()
@@ -274,6 +277,28 @@ class DiagExpectationUnitLayer(Layer):
         index = self._Np-self._q.shape[0]
         self._lower_bounds[index:] = [1E-5]*self._q.shape[0]
         self._upper_bounds[index:] = [param_bound]*self._q.shape[0]
+        
+    def show_activation(self, N, bound=2):
+        """
+            Plots the Nth activation function on
+            [-bound,+bound]
+        """
+        if(N > self._Nout):
+            print("Node does not exist!")
+        else:
+        
+            D = self._phase*np.linspace(-bound, bound, 1000)
+            D = D.reshape((D.shape[0],1))
+        
+            O = np.matrix([[self._q[N-1, N-1]]], dtype=complex)
+        
+            if(self._phase==1):
+                E = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval(D / (2.0j * np.pi), -O/ (2.0j * np.pi), mode=1, derivs=[[1]])
+            else:
+                E = -1.0/(2j*np.pi)*1.0/self._phase*RiemannTheta.normalized_eval(D / (2.0j * np.pi), -O/ (2.0j * np.pi), mode=2, derivs=[[1]])
+           
+            plt.plot(1.0/self._phase*D.flatten(), E.flatten(),"b-")
+        
         
     def feedin(self, X, grad_calc=False):
         """ Feeds in the data X and returns the output of the layer 
