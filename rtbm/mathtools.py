@@ -4,8 +4,6 @@ import numpy as np
 from riemann_theta.riemann_theta import RiemannTheta
 RTBM_precision= 1e-8
 
-from numba import jit
-
 from sympy import *
 from sympy.abc import x,y
 

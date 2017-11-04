@@ -89,10 +89,17 @@ class RTBM(object):
 
     @mode.setter
     def mode(self, value):
+
+        mode = 0
+        if self._phase == 1:
+            mode = 1
+        elif self._phase == 1j:
+            mode = 2
+
         if value is self.Mode.Probability:
-            self._call = lambda data: rtbm_probability(data, self._bv, self._bh, self._t, self._w, self._q)
+            self._call = lambda data: rtbm_probability(data, self._bv, self._bh, self._t, self._w, self._q, mode)
         elif value is self.Mode.LogProbability:
-            self._call = lambda data: rtbm_log_probability(data, self._bv, self._bh, self._t, self._w, self._q)
+            self._call = lambda data: rtbm_log_probability(data, self._bv, self._bh, self._t, self._w, self._q, mode)
         elif value is self.Mode.Expectation:
             self._call = lambda data: self._phase*hidden_expectations(data, self._bh, self._w, self._q)
         else:

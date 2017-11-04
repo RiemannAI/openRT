@@ -424,6 +424,14 @@ cdef class RiemannTheta_Function(object):
         values = u + numpy.log(v)
         return values
 
+    def parts_eval(self, z, Omega, mode=0, **kwds):
+        r"""Returns the log(exponential) and oscillatory part
+        """
+        u = self.exponential_part(z, Omega, **kwds)
+        v = self.oscillatory_part(z, Omega, mode, **kwds)
+        return u, v
+
+
     def normalized_eval(self, z, Omega, mode=0, **kwds):
         r"""Returns the value of the log Riemann theta function at `z` and `Omega`.
 
