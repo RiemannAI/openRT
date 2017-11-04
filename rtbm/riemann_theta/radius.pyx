@@ -43,7 +43,7 @@ from numpy.linalg import norm, inv
 from scipy.special import gamma, gammaincc, gammainccinv, binom
 from scipy.optimize import fsolve
 
-cdef extern from *:
+cdef extern from "header.h":
     void lll_reduce(double*, int, double, double)
 
 
@@ -292,4 +292,3 @@ def radius2(eps, r, g, T, derivs, accuracy_radius=5):
     R = sqrt(ins) + r/2.0
     radius = max(R,lbnd)
     return radius
-
