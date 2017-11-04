@@ -115,39 +115,60 @@ class CMA(object):
 class SGD(object):
     """ Implements standard stochastic gradient descent """
     """ ToDo: Batch training """
-    def train(self, cost, model, x_data, y_data=None, maxiter=100, lr=0.0001, momentum=0,nesterov=False, noise=0):
+    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.0001, momentum=0,nesterov=False, noise=0, log_step=100):
         oldG = np.zeros(model.get_parameters().shape)
         
+        # Generate batches
+        RE = 0
+        if(batch_size > 0):
+            BS = x_data.shape[1] / batch_size
+            if(x_data.shape[1] % batch_size > 0):
+                RE = 1
+        else:
+            BS = 1
+            batch_size = x_data.shape[1]
+            
         # Switch on/off noise
         nF = 0
         if noise > 0 :
             nF = 1
             
         t0 = time.time()
-        for i in range(0, maxiter):
-            Xout = model.feed_through(x_data, True)
-            C = cost.cost(Xout,y_data)
-            model.backprop(cost.gradient(Xout,y_data))
-            
-            W = model.get_parameters()
-            
-            # Nesterov update 
-            if(nesterov==True):
-                model.set_parameters(W-oldG)
-            
-            # Get gradients
-            G = model.get_gradients()
         
-            # Adjust weights (with momentum)
-            U = lr*G + momentum*oldG + nF*np.random.normal(0, lr/(1+i)**noise, oldG.shape)
-            oldG = U
+        # Loop over epoches
+        for i in range(0, maxiter):
             
-            W = W - U
+            # Loop over batches
+            for b in range(0, BS+RE):
+                #print("bs: ",b*batch_size, "be:",(b+1)*batch_size)
+                
+                data_x = x_data[:,b*batch_size:(b+1)*batch_size]
+                data_y = y_data[:,b*batch_size:(b+1)*batch_size]
+                
+                Xout = model.feed_through(data_x, True)
+                C = cost.cost(Xout,data_y)
+                model.backprop(cost.gradient(Xout,data_y))
             
-            # Set gradients
-            model.set_parameters(W)
+                W = model.get_parameters()
             
-            if i % 100 == 0:
+                # Nesterov update 
+                if(nesterov==True):
+                    model.set_parameters(W-oldG)
+            
+                # Get gradients
+                G = model.get_gradients()
+        
+                # Adjust weights (with momentum)
+                U = lr*G + momentum*oldG + nF*np.random.normal(0, lr/(1+i)**noise, oldG.shape)
+                oldG = U
+            
+                W = W - U
+            
+                # Set gradients
+                model.set_parameters(W)
+            
+            
+            if i % log_step == 0:
                 print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0, C))
             
         print("Cost: ",C)    
