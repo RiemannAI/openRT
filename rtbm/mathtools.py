@@ -24,12 +24,12 @@ def check_normalization_consistency(t, q, w):
     return np.all(np.linalg.eigvals(c) > 0)
 
 
-def rtbm_probability(v, bv, bh, t, w, q):
+def rtbm_probability(v, bv, bh, t, w, q, mode=1):
     """Implements the RTBM probability"""
-    return np.exp(rtbm_log_probability(v, bv, bh, t, w, q))
+    return np.exp(rtbm_log_probability(v, bv, bh, t, w, q, mode))
 
 
-def rtbm_log_probability(v, bv, bh, t, w, q):
+def rtbm_log_probability(v, bv, bh, t, w, q, mode=1):
     """Implements the RTBM probability"""
     detT = np.linalg.det(t)
     invT = np.linalg.inv(t)
@@ -44,8 +44,8 @@ def rtbm_log_probability(v, bv, bh, t, w, q):
 
     ExpF = -0.5 * vTv.diagonal() - Bvv - BiTB * np.ones(v.shape[1])
   
-    lnR1 = RiemannTheta.log_eval((vT.dot(w) + BhT) / (2.0j * np.pi), -q / (2.0j * np.pi), epsilon=RTBM_precision, mode=1)
-    lnR2 = RiemannTheta.log_eval((BhT - BtiTW) / (2.0j * np.pi), (-q + WtiTW) / (2.0j * np.pi), epsilon=RTBM_precision, mode=1)
+    lnR1 = RiemannTheta.log_eval((vT.dot(w) + BhT) / (2.0j * np.pi), -q / (2.0j * np.pi), mode, epsilon=RTBM_precision)
+    lnR2 = RiemannTheta.log_eval((BhT - BtiTW) / (2.0j * np.pi), (-q + WtiTW) / (2.0j * np.pi), mode,epsilon=RTBM_precision)
 
     return np.log(np.sqrt(detT / (2.0 * np.pi) ** (v.shape[0]))) + ExpF + lnR1 - lnR2
 
@@ -86,6 +86,21 @@ def gradient_log_1d_theta_phaseI(v, q, d):
     #L = np.pi*vfunc(3,np.pi*v/(2j*np.pi),np.exp(-1j*np.pi*q[0,0]/(2j*np.pi)), derivative=1)
     
     return (-(L/R) / (2.0j * np.pi)).flatten() - re[0].flatten()
+
+
+def gradient_log_1d_theta_phaseII(v, q, d):
+    """ Implements the directional log gradient
+
+        d : int for direction of gradient
+    """
+    Nh = q.shape[0]
+    D = np.zeros(Nh)
+    D[d] = 1
+
+    R = RiemannTheta(v / (2.0j * np.pi), -q / (2.0j * np.pi), mode=2, epsilon=RTBM_precision)
+    L = RiemannTheta(v / (2.0j * np.pi), -q / (2.0j * np.pi), mode=2, epsilon=RTBM_precision, derivs=[D])
+   
+    return (-(L/R) / (2.0j * np.pi)).flatten()
 
 
 

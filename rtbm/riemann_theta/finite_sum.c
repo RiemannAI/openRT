@@ -339,38 +339,35 @@ finite_sum_without_derivatives_phaseII(double* fsum_real, double* fsum_imag,
                                double* Yinv, double* T, double* S,
                                int g, int N, int num_vectors)
 {
-  // compute the finite sum for each z-vector
-  for (int kk = 0; kk < num_vectors; kk++)
-  {
-      double *x = &zr[kk*g];
+  
+  // Empty
+  for (int kk = 0; kk < num_vectors; kk++) {
+      fsum_real[kk] = 0;
+      fsum_imag[kk] = 0;
+  }
     
-      // compute the shifted vectors: shift = Yinv*y as well as its integer and
-      // fractional parts
-      int k;
-      
-      // compute the finite sum
-      double real_total = 0, imag_total = 0;
-      double npt, cpt, ept, spt;
-      double* n;
-      for(k = 0; k < N; k++) {
-        // the current point in S \subset ZZ^g
-        n = S + k*g;
+  double* n;
+  int k;
+     
+  for(k = 0; k < N; k++) {
+      // the current point in S \subset ZZ^g
+      n = S + k*g;
 
-        // More to optimize here: only \pm pi,0 here   
+      double npt = exp(normpart_phaseII(n, T, g));
+      
+      // Sum over dataset  
+      for (int kk = 0; kk < num_vectors; kk++)
+      {
+          double *x = &zr[kk*g];
+      
+          // compute the "cosine" and "sine" parts of the summand
+          double ept = exppart_phaseII(n, X, x, g);
           
-        // compute the "cosine" and "sine" parts of the summand
-        ept = exppart_phaseII(n, X, x, g);
-        npt = exp(normpart_phaseII(n, T, g));
-        cpt = npt * cos(ept);
-        spt = npt * sin(ept);
-          
-        real_total += cpt;
-        imag_total += spt;
+          //store values to poiners
+          fsum_real[kk] += npt * cos(ept);
+          fsum_imag[kk] += npt * sin(ept);
       }
 
-      //store values to poiners
-      fsum_real[kk] = real_total;
-      fsum_imag[kk] = imag_total;
   }
 }    
     
@@ -482,7 +479,7 @@ deriv_prod_phaseI(double* dpr, double* dpi,
 {
   double nmintshift[g];
   double term_real;
-  double total_real, total_real_tmp;
+  double total_real;
  
   int i,j;
 
@@ -545,7 +542,7 @@ deriv_prod_phaseII(double* dpr, double* dpi,
 {
 
   double term_real;
-  double total_real, total_real_tmp;
+  double total_real;
 
   int i,j;
 
@@ -706,28 +703,32 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
     compute the shifted vectors: shift = Yinv*y as well as its integer and
     fractional parts
   */
+  
+ 
+  // Loop over dataset  
   for (int kk = 0; kk < num_vectors; kk++)
   {
       double *y = &zi[kk*g];
 
       int k,j;
+     
       double shift[g];
       double intshift[g];
       double fracshift[g];
       double sum;
+      
       for (k = 0; k < g; k++) {
-        sum = 0;
-        for (j = 0; j < g; j++)
-          sum += Yinv[k*g + j] * y[j];
-
-        shift[k] = sum;
-      }
+          sum = 0;
+          for (j = 0; j < g; j++)
+              sum += Yinv[k*g + j] * y[j];
+              shift[k] = sum;
+          }
 
       for(k = 0; k < g; k++) {
-        intshift[k] = round(shift[k]);
-        fracshift[k] = shift[k] - intshift[k];
+          intshift[k] = round(shift[k]);
+          fracshift[k] = shift[k] - intshift[k];
       }
-
+      
       // compute the finite sum
       double real_total = 0, imag_total = 0;
       double npt;
@@ -770,43 +771,43 @@ finite_sum_with_derivatives_phaseII(double* fsum_real, double* fsum_imag,
                             double* deriv_real, double* deriv_imag,
                             int nderivs, int g, int N, int num_vectors)
 {
-  /*
-    compute the shifted vectors: shift = Yinv*y as well as its integer and
-    fractional parts
-  */
-  for (int kk = 0; kk < num_vectors; kk++)
-  {
-      double *x = &zr[kk*g];
+  
+  // Empty
+  for (int kk = 0; kk < num_vectors; kk++) {
+      fsum_real[kk] = 0;
+      fsum_imag[kk] = 0;
+  }  
+  
+  double* n;
      
- 
-      // compute the finite sum
-      double real_total = 0, imag_total = 0;
-      double ept, npt, cpt, spt;
-      double dpr[1];
-      double dpi[1];
-      double* n;
-      dpr[0] = 0;
-      dpi[0] = 0;
+  for(int k = 0; k < N; k++) {
+      // the current point in S \subset ZZ^g
+      n = S + k*g;
+      double npt = exp(normpart_phaseII(n, T, g));
+     
+      // Loop over dataset  
+      for (int kk = 0; kk < num_vectors; kk++)
+      {
+          double *x = &zr[kk*g];
+     
+          // compute the finite sum
+          double ept, cpt, spt;
+          double dpr[1];
+          double dpi[1];
+          dpr[0] = 0;
+          dpi[0] = 0;
       
-      int k;
-      
-      for(k = 0; k < N; k++) {
-        // the current point in S \subset ZZ^g
-        n = S + k*g;
-
-        // compute the "cosine" and "sine" parts of the summand
-        ept = exppart_phaseII(n, X, x, g);
-        npt = exp(normpart_phaseII(n, T, g));
-        cpt = npt * cos(ept);
-        spt = npt * sin(ept);
-        deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
-        real_total += dpr[0] * cpt - dpi[0] * spt;
-        imag_total += dpr[0] * spt + dpi[0] * cpt;
+          // compute the "cosine" and "sine" parts of the summand
+          ept = exppart_phaseII(n, X, x, g);
+          cpt = npt * cos(ept);
+          spt = npt * sin(ept);
+          
+          deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
+          
+          fsum_real[kk] += dpr[0] * cpt - dpi[0] * spt;
+          fsum_imag[kk] += dpr[0] * spt + dpi[0] * cpt;
       }
 
-      // store values to poiners
-      fsum_real[kk] = real_total;
-      fsum_imag[kk] = imag_total;
   }
 }   
     
