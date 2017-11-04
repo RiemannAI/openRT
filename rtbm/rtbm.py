@@ -25,6 +25,7 @@ class RTBM(object):
             hidden_units: number of hidden units
             mode: see Mode enumerator
             init_max_param_bound: size of maximum parameters used in random initialization.
+            random_bound: selects the maximum random value for the Schur complement initialization
             phase: number which multiplies w and bh
 
         """
