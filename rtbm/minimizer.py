@@ -70,8 +70,14 @@ class CMA(object):
             with closing(mp.Pool(self.num_cores, initializer=worker_initialize,
                                  initargs=(cost, model, x_data, y_data))) as pool:
                 while not es.stop():
-                    solutions = es.ask(gradf=grad)
-                    f_values = pool.map_async(worker_compute, solutions).get()
+                    f_values, solutions = [], []
+                    while len(solutions) < es.popsize:
+                        x = es.ask(es.popsize-len(solutions), gradf=grad)
+                        curr_fit = pool.map_async(worker_compute, x).get()
+                        for value, solution in zip(curr_fit,x):
+                            if not np.isnan(value):
+                                solutions.append(solution)
+                                f_values.append(value)
                     es.tell(solutions, f_values)
                     es.disp()
                 pool.terminate()
