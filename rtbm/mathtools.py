@@ -197,7 +197,8 @@ def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
     vW = np.transpose(v).dot(w)
 
     E = np.zeros((Nh,v.shape[1]), dtype=complex)
-
+    
+    
     for i in range(Nh):
         O = np.matrix([[q[i, i]]], dtype=complex)
         
@@ -205,11 +206,9 @@ def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
         if(np.real(O[0,0])<=0 or np.isnan(O).any()):
             print("NaN detected or negative value: ",O)   
             O[0,0] = np.abs(O[0,0])
-           
-            
+        
         if(phaseI==True):
-            E[i] = gradient_log_1d_theta_phaseI(np.real((vW[:, [i]] + bh[i])), np.real(O), 0)
+            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval((vW[:, [i]] + bh[i])/ (2.0j * np.pi), -O/ (2.0j * np.pi), mode=1, epsilon=RTBM_precision, derivs=[[1]])
         else:
-            E[i] = gradient_log_1d_theta_phaseII((vW[:, [i]] + bh[i]), O, 0)
-
+            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval((vW[:, [i]] + bh[i])/ (2.0j * np.pi), -O/ (2.0j * np.pi), mode=2, epsilon=RTBM_precision, derivs=[[1]])
     return E

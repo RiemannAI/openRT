@@ -44,6 +44,7 @@ extern "C" {
 #define M_PI 3.14159265358979323846
 #endif
 
+    
 /******************************************************************************
   exppart
   -------
@@ -144,29 +145,57 @@ normpart(double* n, double* T, double* fracshift, int g)
 
   return -M_PI * norm;
 }
+    
+/*
+    Phase I
+*/  
+double
+normpart_phaseI(double* n, double* T, double* fracshift, int g)
+{
+  double tmp1[g];
+  int i,j;
 
+  // tmp1 = n + fracshift
+  for (i = 0; i < g; i++) {
+    tmp1[i] = n[i] + fracshift[i];
+  }
+    
+  // tmp2 = T*(n+fracshift)
+  double norm = 0;
+ 
+  double sum;
+  for (i = 0; i < g; i++) {
+    sum = 0;
+    for (j = 0; j < g; j++)
+      sum += T[i*g + j] * tmp1[j];
+
+    norm += sum*sum;
+  }
+
+  return -M_PI * norm;
+}
+    
+   
+/*
+    Phase II
+*/
 
 double
 normpart_phaseII(double* n, double* T, int g)
 {
 
-  double tmp2[g];
   int i,j;
     
   // tmp2 = T*(n+fracshift)
+  double norm = 0;
   double sum;
   for (i = 0; i < g; i++) {
     sum = 0;
-    for (j = 0; j < g; j++)
+    for (j = 0; j < g; j++) {
       sum += T[i*g + j] * n[j];
-
-    tmp2[i] = sum;
+    }
+    norm = sum*sum;
   }
-
-  // norm = || T*(n + fracshift) || ^ 2
-  double norm = 0;
-  for (i = 0; i < g; i++)
-    norm += tmp2[i] * tmp2[i];
 
   return -M_PI * norm;
 }
@@ -209,7 +238,7 @@ finite_sum_without_derivatives(double* fsum_real, double* fsum_imag,
                                int g, int N, int num_vectors)
 {
   // compute the finite sum for each z-vector
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int kk = 0; kk < num_vectors; kk++)
   {
       double *x = &zr[kk*g];
@@ -277,7 +306,6 @@ finite_sum_without_derivatives_phaseI(double* fsum_real, double* fsum_imag,
                                int g, int N, int num_vectors)
 {
   // compute the finite sum for each z-vector
-  
   for (int kk = 0; kk < num_vectors; kk++)
   {
       double *y = &zi[kk*g];
@@ -285,7 +313,6 @@ finite_sum_without_derivatives_phaseI(double* fsum_real, double* fsum_imag,
       // compute the shifted vectors: shift = Yinv*y as well as its integer and
       // fractional parts
       int k,j;
-      double shift[g];
       double fracshift[g];
 
       // compute the following:
@@ -295,27 +322,20 @@ finite_sum_without_derivatives_phaseI(double* fsum_real, double* fsum_imag,
       double sum;
       for (k = 0; k < g; k++) {
         sum = 0;
-        for (j = 0; j < g; j++)
+        for (j = 0; j < g; j++) {
           sum += Yinv[k*g + j] * y[j];
-
-          shift[k] = sum;
-      }
-
-      for(k = 0; k < g; k++) {
-        fracshift[k] = shift[k] - round(shift[k]);
+        }
+        fracshift[k] = sum - round(sum);
       }
 
       // compute the finite sum
       double real_total = 0;
-      double npt;
       double* n;
       for(k = 0; k < N; k++) {
         // the current point in S \subset ZZ^g
         n = S + k*g;
 
-        npt = exp(normpart(n, T, fracshift, g));
-      
-        real_total += npt;
+        real_total += exp(normpart_phaseI(n, T, fracshift, g));
       }
 
       //store values to poiners
@@ -484,9 +504,10 @@ deriv_prod_phaseI(double* dpr, double* dpi,
   int i,j;
 
   // compute n-intshift
-  for (i = 0; i < g; i++)
+  for (i = 0; i < g; i++) {
     nmintshift[i] = n[i] - intshift[i];
-
+  }
+    
   /*
      Computes the dot product of each directional derivative and nmintshift.
      Then it computes the product of the resulting complex scalars.
@@ -634,7 +655,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
     compute the shifted vectors: shift = Yinv*y as well as its integer and
     fractional parts
   */
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int kk = 0; kk < num_vectors; kk++)
   {
       double *x = &zr[kk*g];
@@ -672,7 +693,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 
         // compute the "cosine" and "sine" parts of the summand
         ept = exppart(n, X, x, intshift, g);
-        npt = exp(normpart(n, T, fracshift, g));
+        npt = exp(normpart_phaseI(n, T, fracshift, g));
         cpt = npt * cos(ept);
         spt = npt * sin(ept);
         deriv_prod(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
@@ -688,6 +709,7 @@ finite_sum_with_derivatives(double* fsum_real, double* fsum_imag,
 
     
 /*
+ *   Phase I   
  *   Simplified version for purely imaginary Q and z
  *   
  */
@@ -704,15 +726,15 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
     fractional parts
   */
   
+  // ToDo: Calc first shifts then sum over points !
  
-  // Loop over dataset  
+  // Loop over dataset
   for (int kk = 0; kk < num_vectors; kk++)
   {
       double *y = &zi[kk*g];
 
       int k,j;
      
-      double shift[g];
       double intshift[g];
       double fracshift[g];
       double sum;
@@ -721,14 +743,12 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
           sum = 0;
           for (j = 0; j < g; j++)
               sum += Yinv[k*g + j] * y[j];
-              shift[k] = sum;
-          }
-
-      for(k = 0; k < g; k++) {
-          intshift[k] = round(shift[k]);
-          fracshift[k] = shift[k] - intshift[k];
+  
+          intshift[k] = round(sum);
+          fracshift[k] = sum - intshift[k];
       }
-      
+
+     
       // compute the finite sum
       double real_total = 0, imag_total = 0;
       double npt;
@@ -737,7 +757,7 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
       double* n;
       dpr[0] = 0;
       dpi[0] = 0;
-      
+     
       for(k = 0; k < N; k++) {
         // the current point in S \subset ZZ^g
         n = S + k*g;
@@ -760,6 +780,7 @@ finite_sum_with_derivatives_phaseI(double* fsum_real, double* fsum_imag,
     
 
 /*
+ *   Phase II
  *   Simplified version for purely imaginary Q and purely real z
  *   
  */
@@ -779,12 +800,19 @@ finite_sum_with_derivatives_phaseII(double* fsum_real, double* fsum_imag,
   }  
   
   double* n;
-     
+  double dpr[1];
+  double dpi[1];  
+  
   for(int k = 0; k < N; k++) {
       // the current point in S \subset ZZ^g
       n = S + k*g;
       double npt = exp(normpart_phaseII(n, T, g));
      
+      dpr[0] = 0;
+      dpi[0] = 0;
+      
+      deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
+          
       // Loop over dataset  
       for (int kk = 0; kk < num_vectors; kk++)
       {
@@ -792,24 +820,93 @@ finite_sum_with_derivatives_phaseII(double* fsum_real, double* fsum_imag,
      
           // compute the finite sum
           double ept, cpt, spt;
-          double dpr[1];
-          double dpi[1];
-          dpr[0] = 0;
-          dpi[0] = 0;
-      
+        
           // compute the "cosine" and "sine" parts of the summand
           ept = exppart_phaseII(n, X, x, g);
-          cpt = npt * cos(ept);
-          spt = npt * sin(ept);
+          cpt = npt*cos(ept);
+          spt = npt*sin(ept);
           
-          deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
-          
-          fsum_real[kk] += dpr[0] * cpt - dpi[0] * spt;
-          fsum_imag[kk] += dpr[0] * spt + dpi[0] * cpt;
+          fsum_real[kk] += (dpr[0] * cpt - dpi[0] * spt);
+          fsum_imag[kk] += (dpr[0] * spt + dpi[0] * cpt);
       }
 
   }
 }   
+   
+    
+/*
+ *   Phase I 
+ *   nth derivative over 0th derivative
+ *   
+ */    
+void
+finite_sum_with_derivatives_normalized_phaseI(double* fsum_real, double* fsum_imag,
+                            double* X, double* Yinv, double* T,
+                            double* zr, double* zi, double* S,
+                            double* deriv_real, double* deriv_imag,
+                            int nderivs, int g, int N, int num_vectors)
+{
+  /*
+    compute the shifted vectors: shift = Yinv*y as well as its integer and
+    fractional parts
+  */
+  
+  
+  // Loop over dataset
+  for (int kk = 0; kk < num_vectors; kk++)
+  {
+      double *y = &zi[kk*g];
+
+      int k,j;
+     
+      double intshift[g];
+      double fracshift[g];
+      double sum;
+      
+      for (k = 0; k < g; k++) {
+          sum = 0;
+          for (j = 0; j < g; j++)
+              sum += Yinv[k*g + j] * y[j];
+  
+          intshift[k] = round(sum);
+          fracshift[k] = sum - intshift[k];
+      }
+
+     
+      // compute the finite sum
+      double real_total_nom = 0, imag_total_nom = 0;
+      double real_total_den = 0;
+      
+      double npt;
+      double dpr[1];
+      double dpi[1];
+      double* n;
+      dpr[0] = 0;
+      dpi[0] = 0;
+     
+      for(k = 0; k < N; k++) {
+        // the current point in S \subset ZZ^g
+        n = S + k*g;
+
+        // compute the "cosine" and "sine" parts of the summand
+        
+        npt = exp(normpart(n, T, fracshift, g));
+          
+        deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
+        
+        real_total_nom += dpr[0] * npt;
+        imag_total_nom += dpi[0] * npt;
+        real_total_den += npt;
+      }
+
+      fsum_real[kk] = real_total_nom/real_total_den;
+      fsum_imag[kk] = imag_total_nom/real_total_den;
+  }
+}    
+    
+    
+
+    
     
     
 #ifdef __cplusplus
