@@ -23,8 +23,9 @@ def worker_initialize(cost, model, x_data, y_data):
 
 
 def worker_compute(params):
-    resource.model.set_parameters(params)
-    res = resource.cost_function.cost(resource.model(resource.x_data), resource.y_data)
+    if not resource.model.set_parameters(params):
+        return np.NaN
+    res = resource.cost_function.cost(np.real(resource.model(resource.x_data)), resource.y_data)
     return res
 
 
@@ -72,16 +73,20 @@ class CMA(object):
                     solutions = es.ask(gradf=grad)
                     f_values = pool.map_async(worker_compute, solutions).get()
                     es.tell(solutions, f_values)
-                    es.logger.add()
                     es.disp()
                 pool.terminate()
         else:
             worker_initialize(cost, model, x_data, y_data)
             while not es.stop():
-                solutions = es.ask(gradf=grad)
-                f_values = [ worker_compute(isol) for isol in solutions ]
+                f_values, solutions = [], []
+                while len(solutions) < es.popsize:
+                    curr_fit = x = np.NaN
+                    while np.isnan(curr_fit):
+                        x = es.ask(1, gradf=grad)[0]
+                        curr_fit = worker_compute(x)
+                    solutions.append(x)
+                    f_values.append(curr_fit)
                 es.tell(solutions, f_values)
-                es.logger.add()
                 es.disp()
         print(es.result)
 
@@ -101,7 +106,6 @@ class CMA(object):
         self._num_cores = cores
 
 
-        
 class SGD(object):
     """ Implements standard stochastic gradient descent """
     """ ToDo: Batch training """
@@ -110,7 +114,7 @@ class SGD(object):
         
         # Switch on/off noise
         nF = 0
-        if(noise>0):
+        if noise > 0 :
             nF = 1
             
         t0 = time.time()
@@ -137,8 +141,8 @@ class SGD(object):
             # Set gradients
             model.set_parameters(W)
             
-            if(i % 100 == 0):
-                print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0,C))
+            if i % 100 == 0:
+                print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0, C))
             
         print("Cost: ",C)    
         print("Sol: ",W)

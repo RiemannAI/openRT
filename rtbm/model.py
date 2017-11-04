@@ -100,6 +100,8 @@ class Model(object):
             L.set_parameters(params[Nt:Nt+L.size()])
             Nt += L.size()
 
+        return True
+
     def predict(self, x):
         """ Performs prediction with the trained model """
         return self.feed_through(x)

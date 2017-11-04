@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from mathtools import rtbm_probability, hidden_expectations, rtbm_log_probability
+from mathtools import rtbm_probability, hidden_expectations, rtbm_log_probability, \
+    check_normalization_consistency, check_pos_def
 
 
 class AssignError(Exception):
@@ -15,8 +16,8 @@ class RTBM(object):
         LogProbability = 1
         Expectation = 2
 
-    def __init__(self, visible_units, hidden_units,
-                 mode=Mode.Probability, init_max_param_bound=1, phase=1):
+    def __init__(self, visible_units, hidden_units, mode=Mode.Probability,
+                 init_max_param_bound=2, random_bound=1, phase=1):
         """Setup operators for BM based on the number of visible and hidden units
 
         Args:
@@ -34,17 +35,11 @@ class RTBM(object):
         self._bh = np.zeros([hidden_units, 1])
         self._w = np.zeros([visible_units, hidden_units])
         self._q = np.zeros([hidden_units, hidden_units])
-        self._a_size = (self._Nv+self._Nh)**2
-        self._a_shape = ((self._Nv+self._Nh), (self._Nv+self._Nh))
-        self._size = self._Nv + self._Nh + self._a_size
+        self._size = self._Nv + self._Nh + (self._Nv**2+self._Nv+self._Nh**2+self._Nh)/2+self._Nv*self._Nh
         self._mode = None
         self._call = None
+        self._parameters = None
         self._phase = phase
-
-        # Populate with random parameters
-        self._parameters = np.random.uniform(-init_max_param_bound,
-                                              init_max_param_bound, self._size)
-        self.set_parameters(self._parameters)
 
         # set operation mode
         self.mode = mode
@@ -52,6 +47,10 @@ class RTBM(object):
         # set boundaries
         self._upper_bounds = [init_max_param_bound] * self._size
         self._lower_bounds = [-init_max_param_bound] * self._size
+
+        # Populate with random parameters using Schur complement
+        # This guarantees an acceptable and instantaneous initial solution
+        self.random_init(random_bound)
 
     def __call__(self, data):
         """Evaluates the RTBM instance for a given data array"""
@@ -61,19 +60,69 @@ class RTBM(object):
         """Get size of RTBM"""
         return self._size
 
+    def random_init(self, bound):
+        """A fast random initializer based on Schur complement
+
+        Args:
+            bound: the maximum value for the random matrix X used by the Schur complement
+        """
+
+        a_shape = ((self._Nv+self._Nh), (self._Nv+self._Nh))
+        a_size = (self._Nv+self._Nh)**2
+
+        params = np.random.uniform(-bound, bound, a_size+self._Nv+self._Nh)
+        x = params[:a_size].reshape(a_shape)
+        a = np.transpose(x).dot(x)
+
+        self._q = a[:self._Nh, :self._Nh]
+        self._t = a[self._Nh:self._Nh + self._Nv, self._Nh:]
+        self._w = self._phase * a[self._Nh:, :self._Nh]
+        self._bv = params[a_size:a_size + self._Nv].reshape(self._bv.shape)
+        self._bh = self._phase * params[-self._Nh:].reshape(self._bh.shape)
+
+        # store parameters having in mind that Q and T are symmetric.
+        self._parameters = np.concatenate([self._bv.flatten(), self._bh.flatten(),
+                                           self._w.flatten(), self._t[np.triu_indices(self._Nv)],
+                                           self._q[np.triu_indices(self._Nh)]])
+
     def set_parameters(self, params):
-        """Assigns a flat array of parameters to the RTBM matrices"""
+        """Assigns a flat array of parameters to the RTBM matrices.
+
+        Args
+            params: list of parameters to populate Bv, Bh, W, T, Q
+
+        Returns:
+            True if Q, T and Q-WtTW are positive, False otherwise.
+        """
+
         if len(params) != self._size:
             raise Exception('Size does no match.')
 
         self._parameters = params
-        x = params[0:self._a_size].reshape(self._a_shape)
-        a = np.transpose(x).dot(x)
-        self._q = a[:self._Nh,:self._Nh]
-        self._t = a[self._Nh:self._Nh+self._Nv,self._Nh:]
-        self._w = self._phase*a[self._Nh:,:self._Nh]
-        self._bv = params[self._a_size:self._a_size+self._Nv].reshape(self._bv.shape)
-        self._bh = self._phase*params[-self._Nh:].reshape(self._bh.shape)
+
+        self._bv = params[:self._Nv].reshape(self._bv.shape)
+        index = self._Nv
+
+        self._bh = self._phase*params[index:index+self._Nh].reshape(self._bh.shape)
+        index += self._Nh
+
+        self._w = self._phase*params[index:index+self._Nv*self._Nh].reshape(self._w.shape)
+        index += self._w.size
+
+        triu = np.triu_indices(self._Nv)
+        self._t[triu] = params[index:index+(self._Nv**2+self._Nv)/2]
+        self._t[np.tril_indices(self._Nv)] = self._t[triu]
+        index += (self._Nv**2+self._Nv)/2
+
+        triu = np.triu_indices(self._Nh)
+        self._q[triu] = params[index:index+(self._Nh**2+self._Nh)/2]
+        self._q[np.tril_indices(self._Nh)] = self._q[triu]
+
+        if not check_normalization_consistency(self._t, self._q, self._w) or \
+                not check_pos_def(self._q) or not check_pos_def(self._t):
+            return False
+
+        return True
 
     def get_parameters(self):
         """Return flat array with current matrices weights"""

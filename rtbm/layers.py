@@ -73,6 +73,8 @@ class NormAddLayer(Layer):
         """
         
         self._w = P.reshape(self._w.shape)
+
+        return True
     
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
@@ -155,6 +157,8 @@ class Linear(Layer):
         index += self._b.shape[0]
 
         self._w = params[index:index+self._w.size].reshape(self._w.shape)
+
+        return True
        
     
     def get_bounds(self):
@@ -180,7 +184,7 @@ class SoftMaxLayer(Layer):
         return np.empty(0)
     
     def set_parameters(self, params):
-        return
+        return True
         
     
     def get_bounds(self):
@@ -217,7 +221,7 @@ class MaxPosLayer(Layer):
         return np.empty(0)
     
     def set_parameters(self, params):
-        return
+        return True
         
     
     def get_bounds(self):
@@ -304,6 +308,8 @@ class DiagExpectationUnitLayer(Layer):
         index += self._w.size
 
         np.fill_diagonal(self._q, params[index:index+self._q.shape[0]])
+
+        return True
 
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
