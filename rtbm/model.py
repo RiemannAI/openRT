@@ -67,6 +67,11 @@ class Model(object):
         return np.concatenate(R)
     
     
+    def get_layer(self, N):
+        if(N > len(self._layers)):
+            print("Layer does not exist")
+        else:
+            return self._layers[N-1]
     
     def build_bounds(self):
         """ Collects the bounds of the individual layers """

@@ -239,7 +239,7 @@ class MaxPosLayer(Layer):
 class DiagExpectationUnitLayer(Layer):
     """ A layer of log-gradient theta units """
 
-    def __init__(self, Nin, Nout, Wmax=1,Bmax=1,Qmax=10, phase=1, paramBound=10):
+    def __init__(self, Nin, Nout, Wmax=1,Bmax=1,Qmax=10, phase=1, param_bound=10):
         self._Nin = Nin
         self._Nout = Nout
         self._phase = phase
@@ -258,18 +258,18 @@ class DiagExpectationUnitLayer(Layer):
         self._Np = 2*self._Nout+self._Nout*self._Nin
         
         # Set B bounds
-        self._lower_bounds = [-paramBound for _ in range(self._Np)]
-        self._upper_bounds = [ paramBound for _ in range(self._Np)]
+        self._lower_bounds = [-param_bound for _ in range(self._Np)]
+        self._upper_bounds = [ param_bound for _ in range(self._Np)]
     
         # Set W bounds
         index = self._Np-self._q.shape[0]-self._w.shape[0]
-        self._lower_bounds[index:] = [-paramBound]*self._w.shape[0]
-        self._upper_bounds[index:] = [paramBound]*self._w.shape[0]
+        self._lower_bounds[index:] = [-param_bound]*self._w.shape[0]
+        self._upper_bounds[index:] = [param_bound]*self._w.shape[0]
         
         # set q bounds
         index = self._Np-self._q.shape[0]
         self._lower_bounds[index:] = [1E-5]*self._q.shape[0]
-        self._upper_bounds[index:] = [paramBound]*self._q.shape[0]
+        self._upper_bounds[index:] = [param_bound]*self._q.shape[0]
         
     def feedin(self, X, grad_calc=False):
         """ Feeds in the data X and returns the output of the layer 
