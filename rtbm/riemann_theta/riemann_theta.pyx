@@ -54,7 +54,7 @@ from libc.stdlib cimport malloc, free
 from radius import radius
 from integer_points import integer_points_python
 
-cdef extern from *:
+cdef extern from "header.h":
     void finite_sum_without_derivatives(double*, double*, double*,
                                         double*, double*, double*,
                                         double*, double*, int, int, int)
