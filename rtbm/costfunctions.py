@@ -61,7 +61,6 @@ class crossentropy(costfunction):
     
     def cost(self, x, y):
         lx  = np.log(x)
-   
         return -np.sum(np.mean(np.multiply(y,lx),axis=1))
     
     def gradient(self, x):

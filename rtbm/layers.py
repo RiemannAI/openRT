@@ -169,6 +169,80 @@ class Linear(Layer):
         return [self._lower_bounds, self._upper_bounds]
     
     
+    
+class NonLinear(Layer):
+    """ Non-Linear layer """
+    def __init__(self, Nin, Nout, activation=activations.sigmoid, Wmax=1, Bmax=1, paramBound=10):
+        self._Nin  = Nin
+        self._Nout = Nout
+        self._Np = Nin*Nout+Nout
+        self._act = activation
+        
+        # Set bounds
+        self._lower_bounds = [-paramBound for _ in range(self._Np)]
+        self._upper_bounds = [ paramBound for _ in range(self._Np)]    
+            
+        # Parameter init
+        self._w = np.random.uniform(-Wmax, Wmax,(Nout,Nin)).astype(float)
+        self._b = np.random.uniform(-Bmax, Bmax,(Nout,1)).astype(float)
+        
+        
+    def get_parameters(self):
+        """ Returns the parameters as a flat array 
+            [b,w]
+        """
+
+        return np.concatenate([self._b.flatten(),self._w.flatten()])
+
+    def get_gradients(self):
+        """ Returns gradients as a flat array 
+            [b,w]
+        """
+        return np.concatenate([self._gradB.flatten(),self._gradW.flatten()])
+    
+    
+    def feedin(self, X, grad_calc=False):
+        """ Feeds in the data X and returns the output of the layer 
+            Note: Vectorized 
+        """
+        if(grad_calc==True):
+            self._X = X
+        
+        return self._act.activation(self._w.dot(X)+self._b)
+    
+    def backprop(self, E):
+        """ Propagates the error E through the layer and stores gradient """
+       
+        # Mean bias gradient
+        self._gradB = np.mean(E, axis=1,keepdims=True)
+      
+        # Mean weight gradient
+        self._gradW = E.dot(self._X.T)/self._X.shape[1]
+        
+        # Propagate error
+        # ...
+        return self._w.T.dot(E) # Not correct yet
+    
+    
+    def set_parameters(self, params):
+        """ Set the matrices from flat input array P 
+            P = [b,w]
+        """
+        index = 0
+        
+        self._b = params[index:index+self._b.shape[0]].reshape(self._b.shape)
+        index += self._b.shape[0]
+
+        self._w = params[index:index+self._w.size].reshape(self._w.shape)
+
+        return True
+       
+    
+    def get_bounds(self):
+        """Returns two arrays with min and max of each parameter for the GA"""
+        return [self._lower_bounds, self._upper_bounds]    
+    
+    
 
 
 class SoftMaxLayer(Layer):

@@ -89,7 +89,7 @@ exppart(double* n, double* X, double* x, double* intshift, int g)
     
 
 /*
-    Phase special (X = 0)
+    Phase II special (X = 0)
 */
    
     
