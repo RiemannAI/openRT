@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import time
 from cma import CMAEvolutionStrategy
 import multiprocessing as mp
@@ -112,6 +113,28 @@ class CMA(object):
         self._num_cores = cores
 
 
+# Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    # Print New Line on Complete
+    if iteration == total:
+        print()
+
+
 class SGD(object):
     """ Implements standard stochastic gradient descent """
     """ ToDo: Batch training """
@@ -136,8 +159,9 @@ class SGD(object):
         t0 = time.time()
         
         # Loop over epoches
+        msg = ''
         for i in range(0, maxiter):
-            
+
             # Loop over batches
             for b in range(0, BS+RE):
                 #print("bs: ",b*batch_size, "be:",(b+1)*batch_size)
@@ -166,11 +190,10 @@ class SGD(object):
             
                 # Set gradients
                 model.set_parameters(W)
-            
-            
-            if i % log_step == 0:
-                print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0, C))
-            
+
+            printProgressBar(i+1, maxiter, prefix='Progress:',
+                             suffix="| iteration %d in %.2f(s) | cost = %f" % (i+1, time.time()-t0, C), length=20)
+
         print("Cost: ",C)    
         print("Sol: ",W)
         print("Time: %d s" % (time.time()-t0))
