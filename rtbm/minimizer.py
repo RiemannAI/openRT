@@ -185,7 +185,7 @@ class BFGS(object):
         x0 = np.real(model.get_parameters())
         worker_initialize(cost, model, x_data, y_data)
         bounds = [ (model.get_bounds()[0][i],model.get_bounds()[1][i]) for i in range(model.size())]
-        res = minimize(worker_compute, x0, jac=worker_gradient,
+        res = minimize(worker_compute, x0, jac=lambda x: np.ascontiguousarray(worker_gradient(x), dtype=np.double),
                        bounds=bounds, options = {'gtol': tolfun,
                                                  'disp': True, 'maxiter': maxiter})
         print(res)
