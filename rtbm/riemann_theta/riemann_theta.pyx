@@ -76,6 +76,10 @@ cdef extern from "header.h":
     void finite_sum_with_derivatives_normalized_phaseI(double*, double*, double*, double*,
                                      double*, double*, double*, double*,
                                      double*, double*, int, int, int, int)
+    void finite_sum_with_derivatives_normalized_phaseII(double*, double*, double*, double*,
+                                     double*, double*, double*, double*,
+                                     double*, double*, int, int, int, int)
+    
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -300,23 +304,13 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                 values[k] = numpy.complex(real[k] + 1.0j*imag[k])
                 
         elif(mode==2):
-            values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
-            values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
-    
-            finite_sum_with_derivatives_phaseII(real, imag,
+            finite_sum_with_derivatives_normalized_phaseII(real, imag,
                                         &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
                                         &y[0], &S[0,0],
                                         &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
             
             for k in range(num_vectors):
-                values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
-            
-            finite_sum_without_derivatives_phaseII(real, imag,
-                                           &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
-            for k in range(num_vectors):
-                values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
-            
-            values = values_nom/values_den
+                values[k] = numpy.complex(real[k] + 1.0j*imag[k])
             
     else:
         return numpy.ones(z.shape);
