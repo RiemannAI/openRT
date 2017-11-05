@@ -113,32 +113,13 @@ class CMA(object):
         self._num_cores = cores
 
 
-# Print iterations progress
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
-    # Print New Line on Complete
-    if iteration == total:
-        print()
-
-
 class SGD(object):
     """ Implements standard stochastic gradient descent """
-    """ ToDo: Batch training """
-    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.0001, momentum=0,nesterov=False, noise=0, log_step=100):
+
+    def train(self, cost, model, x_data, y_data=None, maxiter=100,
+              batch_size=0, lr=0.0001, momentum=0,nesterov=False, noise=0):
+        """Performs the SGD training"""
+
         oldG = np.zeros(model.get_parameters().shape)
         
         # Generate batches
@@ -159,12 +140,10 @@ class SGD(object):
         t0 = time.time()
         
         # Loop over epoches
-        msg = ''
         for i in range(0, maxiter):
 
             # Loop over batches
             for b in range(0, BS+RE):
-                #print("bs: ",b*batch_size, "be:",(b+1)*batch_size)
                 
                 data_x = x_data[:,b*batch_size:(b+1)*batch_size]
                 data_y = y_data[:,b*batch_size:(b+1)*batch_size]
@@ -191,13 +170,26 @@ class SGD(object):
                 # Set gradients
                 model.set_parameters(W)
 
-            printProgressBar(i+1, maxiter, prefix='Progress:',
-                             suffix="| iteration %d in %.2f(s) | cost = %f" % (i+1, time.time()-t0, C), length=20)
+            # print to screen
+            self.progress_bar(i+1, maxiter, suffix="| iteration %d in %.2f(s) | cost = %f" % (i+1, time.time()-t0, C))
 
-        print("Cost: ",C)    
-        print("Sol: ",W)
-        print("Time: %d s" % (time.time()-t0))
         return W
+
+    def progress_bar(self, iteration, total, suffix='', length=20, fill='█'):
+        """Call in a loop to create terminal progress bar
+        Args:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            suffix      - Optional  : suffix string (Str)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+        """
+        percent = ("{0:." + str(1) + "f}").format(100 * (iteration / float(total)))
+        filled = int(length * iteration // total)
+        bar = fill * filled + '-' * (length - filled)
+        print('\rProgress: |%s| %s%% %s' % (bar, percent, suffix), end='\r')
+        if iteration == total:
+            print()
 
 
 class BFGS(object):
