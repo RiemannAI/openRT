@@ -6,6 +6,8 @@ import numpy as np
 from mathtools import factorized_hidden_expectations,theta_1d,logtheta_1d_phaseI, logtheta_1d
 from riemann_theta.riemann_theta import RiemannTheta
 
+from activations import sigmoid
+
 import time
 
 import matplotlib.pyplot as plt
@@ -172,7 +174,7 @@ class Linear(Layer):
     
 class NonLinear(Layer):
     """ Non-Linear layer """
-    def __init__(self, Nin, Nout, activation=activations.sigmoid, Wmax=1, Bmax=1, paramBound=10):
+    def __init__(self, Nin, Nout, activation=sigmoid(), Wmax=1, Bmax=1, paramBound=10):
         self._Nin  = Nin
         self._Nout = Nout
         self._Np = Nin*Nout+Nout
