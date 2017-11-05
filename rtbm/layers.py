@@ -186,6 +186,12 @@ class SoftMaxLayer(Layer):
 
         return np.empty(0)
     
+    def get_gradients(self):
+        """ Returns gradients as a flat array 
+            []
+        """
+        return np.empty(0)
+    
     def set_parameters(self, params):
         return True
         
@@ -207,8 +213,20 @@ class SoftMaxLayer(Layer):
        
         return np.divide(E, S[np.newaxis,:])
     
+    def backprop(self, E):
+        """ Propagates the error E through the layer """
+        
+        # Calc error 
+        #...
+        
+        # Propagate error
+        return O
     
 class MaxPosLayer(Layer):
+    """ Depreciated 
+    
+    """
+
     def __init__(self, Nin, startPos=0):
         self._Nin = Nin
         self._Nout = 1
