@@ -271,7 +271,6 @@ class SoftMaxLayer(Layer):
         """ Returns the parameters as a flat array 
             []
         """
-
         return np.empty(0)
     
     def get_gradients(self):
@@ -291,24 +290,26 @@ class SoftMaxLayer(Layer):
 
         return [self._lower_bounds, self._upper_bounds]
     
-    def feedin(self, X, *grad_calc):
+    def feedin(self, X, grad_calc=False):
         """ Feeds in the data X and returns the output of the layer 
             Note: Vectorized 
         """
-        
         E = np.exp(X)
         S = np.sum(E,axis=0) 
-       
-        return np.divide(E, S[np.newaxis,:])
+    
+        O = np.divide(E, S[np.newaxis,:])
+        
+        # Store O for backprop
+        if(grad_calc==True):
+            self._pO = O
+    
+        return O
     
     def backprop(self, E):
         """ Propagates the error E through the layer """
         
-        # Calc error 
-        #...
-        
         # Propagate error
-        return O
+        return E*self._pO+self._pO.dot(E.T.dot(self._pO))
     
 class MaxPosLayer(Layer):
     """ Depreciated 
