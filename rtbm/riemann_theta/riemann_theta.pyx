@@ -79,7 +79,7 @@ cdef extern from "header.h":
     void finite_sum_with_derivatives_normalized_phaseII(double*, double*, double*, double*,
                                      double*, double*, double*, double*,
                                      double*, double*, int, int, int, int)
-    void finite_sum_with_derivatives_normalized_phaseI_multiderivs(double*, double*,
+    void finite_sum_with_multi_derivatives_normalized_phaseI(double*, double*,
                                      double*, double*, double*, double*,
                                      double*, double*, int*, int, int, int, int)
     
@@ -457,9 +457,9 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
             real = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
             imag = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
 
-            finite_sum_with_derivatives_normalized_phaseI_multiderivs(real, imag, &Yinv[0,0], &T[0,0], &y[0], &S[0,0],
-                                                                      &derivs_real[0], &derivs_imag[0], &n_derivs[0],
-                                                                      len(derivs), g, N, num_vectors)
+            finite_sum_with_multi_derivatives_normalized_phaseI(real, imag, &Yinv[0,0], &T[0,0], &y[0], &S[0,0],
+                                                                &derivs_real[0], &derivs_imag[0], &n_derivs[0],
+                                                                len(derivs), g, N, num_vectors)
 
             for i in range(derivs.shape[0]):
                 if num_vectors == 1:

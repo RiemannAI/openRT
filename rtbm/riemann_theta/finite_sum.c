@@ -986,7 +986,7 @@ finite_sum_with_derivatives_normalized_phaseII(double* fsum_real, double* fsum_i
  *
  */
 void
-finite_sum_with_derivatives_normalized_phaseI_multiderivs(double* fsum_real, double* fsum_imag,
+finite_sum_with_multi_derivatives_normalized_phaseI(double* fsum_real, double* fsum_imag,
                             double* Yinv, double* T, double* zi, double* S,
                             double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
                             int numderivs, int g, int N, int num_vectors)
@@ -1056,7 +1056,7 @@ finite_sum_with_derivatives_normalized_phaseI_multiderivs(double* fsum_real, dou
         for (int kk = 0; kk < num_vectors; kk++)
         {
             fsum_real[kk + d*num_vectors] = 1.0;
-            fsum_imag[kk + d*num_vectors] = 1.0;
+            fsum_imag[kk + d*num_vectors] = 0.0;
         }
       }
   }
