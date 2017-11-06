@@ -31,6 +31,14 @@ class sigmoid(actfunc):
         return 1.0/(1+np.exp(-x))
    
     def gradient(self, x):
-        return cost(x)*(1-cost(x))
+        e = np.exp(x)
+        return e/((1+e)**2)
     
-        
+class Tanh(actfunc):
+    """ The tanh """
+
+    def activation(self, x):   
+        return np.tanh(x)
+   
+    def gradient(self, x):
+        return 1.0/(np.cosh(x)**2)

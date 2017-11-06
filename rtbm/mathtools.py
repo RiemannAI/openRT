@@ -195,6 +195,9 @@ def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
 
         Returns [ E(h_1|v), E(h_2|v), ... ] in vectorized form (each E is an array for the vs)
     """
+    
+    # ToDo: Cytonize ! Move input linear combination out !
+    
     Nh = q.shape[0]
 
     vW = np.transpose(v).dot(w)

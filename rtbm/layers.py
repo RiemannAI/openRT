@@ -58,10 +58,15 @@ class NormAddLayer(Layer):
     def __init__(self, Nin, Nout, param_bound=10):
         self._Nin = Nin
         self._Nout = Nout
-        self._param_bound = param_bound
+       
+        # Set paramter bounds
+        lower_bounds = [-param_bound for _ in range(self._Np)]
+        upper_bounds = [ param_bound for _ in range(self._Np)]
+
+        self._bounds = [lower_bounds, upper_bounds]
         
         # Parameter init
-        self._w = np.random.uniform(-1, 1,(Nout,Nin)).astype(complex)
+        self._w = np.random.uniform(-param_bound, param_bound,(Nout,Nin)).astype(complex)
         
         self._Np = self._Nout*self._Nin
    
@@ -83,10 +88,9 @@ class NormAddLayer(Layer):
     
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
-        self._lower_bounds = [-self._param_bound for _ in range(self._Np)]
-        self._upper_bounds = [ self._param_bound for _ in range(self._Np)]
-
-        return [self._lower_bounds, self._upper_bounds]
+        
+        return self._bounds
+        
     
     def feedin(self, X, *grad_calc):
         """ Feeds in the data X and returns the output of the layer 
@@ -102,15 +106,16 @@ class NormAddLayer(Layer):
     
 class Linear(Layer):
     """ Linear layer """
-    def __init__(self, Nin, Nout, Wmax=1, Bmax=1, paramBound=10):
+    def __init__(self, Nin, Nout, Wmax=1, Bmax=1, param_bound=10):
         self._Nin  = Nin
         self._Nout = Nout
         self._Np = Nin*Nout+Nout
          
         # Set bounds
-        self._lower_bounds = [-paramBound for _ in range(self._Np)]
-        self._upper_bounds = [ paramBound for _ in range(self._Np)]    
-            
+        lower_bounds = [-param_bound for _ in range(self._Np)]
+        upper_bounds = [ param_bound for _ in range(self._Np)]    
+        self._bounds = [lower_bounds, upper_bounds]    
+        
         # Parameter init
         self._w = np.random.uniform(-Wmax, Wmax,(Nout,Nin)).astype(float)
         self._b = np.random.uniform(-Bmax, Bmax,(Nout,1)).astype(float)
@@ -168,22 +173,23 @@ class Linear(Layer):
     
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
-        return [self._lower_bounds, self._upper_bounds]
+        return self._bounds
     
     
     
 class NonLinear(Layer):
     """ Non-Linear layer """
-    def __init__(self, Nin, Nout, activation=sigmoid(), Wmax=1, Bmax=1, paramBound=10):
+    def __init__(self, Nin, Nout, activation=sigmoid(), Wmax=1, Bmax=1, param_bound=10):
         self._Nin  = Nin
         self._Nout = Nout
         self._Np = Nin*Nout+Nout
         self._act = activation
         
         # Set bounds
-        self._lower_bounds = [-paramBound for _ in range(self._Np)]
-        self._upper_bounds = [ paramBound for _ in range(self._Np)]    
-            
+        lower_bounds = [-param_bound for _ in range(self._Np)]
+        upper_bounds = [ param_bound for _ in range(self._Np)]    
+        self._bounds = [lower_bounds, upper_bounds]    
+        
         # Parameter init
         self._w = np.random.uniform(-Wmax, Wmax,(Nout,Nin)).astype(float)
         self._b = np.random.uniform(-Bmax, Bmax,(Nout,1)).astype(float)
@@ -207,23 +213,30 @@ class NonLinear(Layer):
         """ Feeds in the data X and returns the output of the layer 
             Note: Vectorized 
         """
+        # Calc linear map to activation ( X = previous outputs)
+        L = self._w.dot(X)+self._b;
+    
+        # Calc and store activation grad 
         if(grad_calc==True):
-            self._X = X
+            self._pO = X
+            self._D = self._act.gradient(L)
         
-        return self._act.activation(self._w.dot(X)+self._b)
+        return self._act.activation(L)
     
     def backprop(self, E):
         """ Propagates the error E through the layer and stores gradient """
        
+        # Calc error at outputs
+        Delta = np.multiply(self._D,E)
+       
         # Mean bias gradient
-        self._gradB = np.mean(E, axis=1,keepdims=True)
+        self._gradB = np.mean(Delta, axis=1,keepdims=True)
       
         # Mean weight gradient
-        self._gradW = E.dot(self._X.T)/self._X.shape[1]
+        self._gradW = Delta.dot(self._pO.T)/self._pO.shape[1]
         
         # Propagate error
-        # ...
-        return self._w.T.dot(E) # Not correct yet
+        return self._w.T.dot(Delta)
     
     
     def set_parameters(self, params):
@@ -242,8 +255,7 @@ class NonLinear(Layer):
     
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
-        return [self._lower_bounds, self._upper_bounds]    
-    
+        return self._bounds
     
 
 
@@ -359,18 +371,21 @@ class DiagExpectationUnitLayer(Layer):
         self._Np = 2*self._Nout+self._Nout*self._Nin
         
         # Set B bounds
-        self._lower_bounds = [-param_bound for _ in range(self._Np)]
-        self._upper_bounds = [ param_bound for _ in range(self._Np)]
-    
+        lower_bounds = [-param_bound for _ in range(self._Np)]
+        upper_bounds = [ param_bound for _ in range(self._Np)]
+        
         # Set W bounds
         index = self._Np-self._q.shape[0]-self._w.shape[0]
-        self._lower_bounds[index:] = [-param_bound]*self._w.shape[0]
-        self._upper_bounds[index:] = [param_bound]*self._w.shape[0]
+        lower_bounds[index:] = [-param_bound]*self._w.shape[0]
+        upper_bounds[index:] = [param_bound]*self._w.shape[0]
         
         # set q bounds
         index = self._Np-self._q.shape[0]
-        self._lower_bounds[index:] = [1E-5]*self._q.shape[0]
-        self._upper_bounds[index:] = [param_bound]*self._q.shape[0]
+        lower_bounds[index:] = [1E-5]*self._q.shape[0]
+        upper_bounds[index:] = [param_bound]*self._q.shape[0]
+        
+        self._bounds = [lower_bounds, upper_bounds]
+        
         
     def show_activation(self, N, bound=2):
         """
@@ -398,6 +413,7 @@ class DiagExpectationUnitLayer(Layer):
         """ Feeds in the data X and returns the output of the layer 
             Note: Vectorized 
         """
+        # If I store Linear combination can be made faster ! 
         
         if(grad_calc==True):
             self._X = X
@@ -432,7 +448,7 @@ class DiagExpectationUnitLayer(Layer):
 
     def get_bounds(self):
         """Returns two arrays with min and max of each parameter for the GA"""
-        return [self._lower_bounds, self._upper_bounds]
+        return self._bounds
     
     def get_gradients(self):
         """ Returns gradients as a flat array 
@@ -522,5 +538,7 @@ class DiagExpectationUnitLayer(Layer):
         print("gWs:",self._gradW.shape)
         print("Ws:",self._w.shape)
         """
+        
+        # Return this or total derivative ??? 
     
         return self._w.dot(delta)
