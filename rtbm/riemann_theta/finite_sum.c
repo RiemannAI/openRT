@@ -977,7 +977,91 @@ finite_sum_with_derivatives_normalized_phaseII(double* fsum_real, double* fsum_i
        fsum_imag[kk] = (fsum_imag[kk]*norm_real[kk]-old_fsum_real*norm_imag[kk])/norm;
    } 
     
-}   
+}
+
+
+/*
+ *   Phase I
+ *   multi nth derivative over 0th derivative
+ *
+ */
+void
+finite_sum_with_derivatives_normalized_phaseI_multiderivs(double* fsum_real, double* fsum_imag,
+                            double* Yinv, double* T, double* zi, double* S,
+                            double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
+                            int numderivs, int g, int N, int num_vectors)
+{
+
+  for (int d = 0; d < numderivs; d++)
+  {
+      if (n_derivs[d] > 0)
+      {
+          int nderivs = n_derivs[d] / g;
+          double *deriv_real = &deriv_real_in[n_derivs[d]-1];
+          double *deriv_imag = &deriv_imag_in[n_derivs[d]-1];
+
+          // Loop over dataset
+          for (int kk = 0; kk < num_vectors; kk++)
+          {
+              double *y = &zi[kk*g];
+
+              int k,j;
+
+              double intshift[g];
+              double fracshift[g];
+              double sum;
+
+              for (k = 0; k < g; k++) {
+                  sum = 0;
+                  for (j = 0; j < g; j++)
+                      sum += Yinv[k*g + j] * y[j];
+
+                  intshift[k] = round(sum);
+                  fracshift[k] = sum - intshift[k];
+              }
+
+
+              // compute the finite sum
+              double real_total_nom = 0, imag_total_nom = 0;
+              double real_total_den = 0;
+
+              double npt;
+              double dpr[1];
+              double dpi[1];
+              double* n;
+              dpr[0] = 0;
+              dpi[0] = 0;
+
+              for(k = 0; k < N; k++) {
+                // the current point in S \subset ZZ^g
+                n = S + k*g;
+
+                // compute the "cosine" and "sine" parts of the summand
+
+                npt = exp(normpart(n, T, fracshift, g));
+
+                deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
+
+                real_total_nom += dpr[0] * npt;
+                imag_total_nom += dpi[0] * npt;
+                real_total_den += npt;
+              }
+
+              fsum_real[kk + d*num_vectors] = real_total_nom/real_total_den;
+              fsum_imag[kk + d*num_vectors] = imag_total_nom/real_total_den;
+          }
+      }
+      else
+      {
+        for (int kk = 0; kk < num_vectors; kk++)
+        {
+            fsum_real[kk + d*num_vectors] = 1.0;
+            fsum_imag[kk + d*num_vectors] = 1.0;
+        }
+      }
+  }
+}
+
     
 
     
