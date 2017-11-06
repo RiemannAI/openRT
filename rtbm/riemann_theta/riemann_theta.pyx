@@ -137,7 +137,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
-    if not isinstance(derivs, dict):
+    if isinstance(derivs, list):
 
         R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
         S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
@@ -201,10 +201,10 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
     else:
 
-        output = {}
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
         real = <double*>malloc(sizeof(double)*num_vectors)
         imag = <double*>malloc(sizeof(double)*num_vectors)
-        for key, value in derivs.iteritems():
+        for i, value in enumerate(derivs):
 
             R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
             S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
@@ -244,9 +244,9 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
                 values[k] = numpy.complex(real[k] + 1.0j*imag[k])
 
             if num_vectors == 1:
-                output[key] = values[0]
+                output[i] = values[0]
             else:
-                output[key] = values
+                output[i] = values
 
         free(real)
         free(imag)
@@ -310,7 +310,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
-    if not isinstance(derivs, dict):
+    if isinstance(derivs, list):
 
         R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
         S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
@@ -384,10 +384,10 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
     else:
 
-        output = {}
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
         real = <double*>malloc(sizeof(double)*num_vectors)
         imag = <double*>malloc(sizeof(double)*num_vectors)
-        for key, value in derivs.iteritems():
+        for i, value in enumerate(derivs):
 
             R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
             S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
@@ -448,9 +448,9 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                 return numpy.ones(z.shape);
 
             if num_vectors == 1:
-                output[key] = values[0]
+                output[i] = values[0]
             else:
-                output[key] = values
+                output[i] = values
 
         free(real)
         free(imag)
@@ -517,15 +517,7 @@ cdef class RiemannTheta_Function(object):
         u = self.exponential_part(z, Omega, **kwds)
         v = self.oscillatory_part(z, Omega, mode, **kwds)
 
-        expu = numpy.exp(u)
-        if not isinstance(v, dict):
-            values = expu * v
-        else:
-            values = {}
-            for key, value in v.iteritems():
-                values[key] = expu * value
-
-        return values
+        return numpy.exp(u)*v
 
     def log_eval(self, z, Omega, mode=0, **kwds):
         r"""Returns the value of the log Riemann theta function at `z` and `Omega`.
@@ -558,14 +550,7 @@ cdef class RiemannTheta_Function(object):
             
         v = self.oscillatory_part(z, Omega, mode, **kwds)
 
-        if not isinstance(v, dict):
-            values = u + numpy.log(v)
-        else:
-            values = {}
-            for key, value in v.iteritems():
-                values[key] = u + numpy.log(value)
-
-        return values
+        return u + numpy.log(v)
 
     def parts_eval(self, z, Omega, mode=0, **kwds):
         r"""Returns the log(exponential) and oscillatory part
@@ -573,14 +558,7 @@ cdef class RiemannTheta_Function(object):
         u = self.exponential_part(z, Omega, **kwds)
         v = self.oscillatory_part(z, Omega, mode, **kwds)
 
-        if not isinstance(v, dict):
-            values = u, v
-        else:
-            values = {}
-            for key, value in v.iteritems():
-                values[key] = u, value
-
-        return values
+        return u, v
 
 
     def normalized_eval(self, z, Omega, mode=0, **kwds):
