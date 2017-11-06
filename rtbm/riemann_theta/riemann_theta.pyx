@@ -390,10 +390,6 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
         output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
 
-        R = radius(epsilon, _T, derivs=[numpy.max(derivs)], accuracy_radius=accuracy_radius)
-        S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
-        N = S.shape[0]
-
         # compute the finite sum for each z-vector
         if mode == 0:
 
@@ -407,6 +403,10 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                     nderivs = len(value) / g
                     derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
                     derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
+
+                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
+                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+                    N = S.shape[0]
 
                     # set up storage locations and vectors
                     values = numpy.zeros(num_vectors, dtype=numpy.complex)
@@ -442,10 +442,15 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                 else:
                     output[i] = values
 
-                free(real)
-                free(imag)
+            free(real)
+            free(imag)
+        else:
 
-        elif mode == 1:
+            R = radius(epsilon, _T, derivs=[numpy.max(derivs)], accuracy_radius=accuracy_radius)
+            S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+            N = S.shape[0]
+
+        if mode == 1:
 
             # set up storage locations and vectors
             y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
