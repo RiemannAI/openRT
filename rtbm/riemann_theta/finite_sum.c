@@ -993,14 +993,16 @@ finite_sum_with_multi_derivatives_normalized_phaseI(double* fsum_real, double* f
 {
 
     // Init
+    int offset = 0;
     int nderivs[numderivs];
     double *deriv_real[numderivs];
     double *deriv_imag[numderivs];
     
     for(int d = 0; d < numderivs; d++) {
         nderivs[d] = n_derivs[d] / g;
-        deriv_real[d] = &deriv_real_in[n_derivs[d]-1];
-        deriv_imag[d] = &deriv_imag_in[n_derivs[d]-1];
+        deriv_real[d] = &deriv_real_in[offset];
+        deriv_imag[d] = &deriv_imag_in[offset];
+        offset += n_derivs[d];
     }
     
     // Loop over dataset
