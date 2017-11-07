@@ -5,8 +5,8 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from mathtools import factorized_hidden_expectations,theta_1d,logtheta_1d_phaseI, logtheta_1d
 from riemann_theta.riemann_theta import RiemannTheta
-from initializers import uniform, normal, glorot_uniform, glorot_normal
-from activations import sigmoid
+from initializers import uniform, normal, glorot_uniform, glorot_normal, null
+from activations import sigmoid, tanh
 
 import time
 
@@ -106,7 +106,7 @@ class NormAddLayer(Layer):
     
 class Linear(Layer):
     """ Linear layer """
-    def __init__(self, Nin, Nout, init=glorot_uniform(), param_bound=10):
+    def __init__(self, Nin, Nout, W_init=glorot_uniform(), B_init=null(), param_bound=10):
         self._Nin  = Nin
         self._Nout = Nout
         self._Np = Nin*Nout+Nout
@@ -117,8 +117,8 @@ class Linear(Layer):
         self._bounds = [lower_bounds, upper_bounds]    
         
         # Parameter init
-        self._w = init.getinit((Nout,Nin) ).astype(float)
-        self._b = init.getinit((Nout,1) ).astype(float)
+        self._w = W_init.getinit((Nout,Nin) ).astype(float)
+        self._b = B_init.getinit((Nout,1) ).astype(float)
         
         
     def get_parameters(self):
@@ -179,7 +179,8 @@ class Linear(Layer):
     
 class NonLinear(Layer):
     """ Non-Linear layer """
-    def __init__(self, Nin, Nout, activation=sigmoid(), init=glorot_uniform(), Wmax=1, Bmax=1, param_bound=10):
+    
+    def __init__(self, Nin, Nout, activation=tanh(), W_init=glorot_uniform(), B_init=null(), param_bound=10):
         self._Nin  = Nin
         self._Nout = Nout
         self._Np = Nin*Nout+Nout
@@ -191,8 +192,8 @@ class NonLinear(Layer):
         self._bounds = [lower_bounds, upper_bounds]    
         
         # Parameter init
-        self._w = init.getinit((Nout,Nin)).astype(float)
-        self._b = init.getinit((Nout,1)).astype(float)
+        self._w = W_init.getinit((Nout,Nin)).astype(float)
+        self._b = B_init.getinit((Nout,1)).astype(float)
         
         
     def get_parameters(self):
