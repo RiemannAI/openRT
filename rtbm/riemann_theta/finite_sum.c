@@ -1087,81 +1087,86 @@ extern "C" {
 						       double* X, double* T, double* zr, double* S,
 						       double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
 						       int numderivs, int g, int N, int num_vectors)
-  {    
-    // Init
+  {
     int offset = 0;
     int nderivs[numderivs];
     double *deriv_real[numderivs];
     double *deriv_imag[numderivs];
+    double dpr[numderivs][1];
+    double dpi[numderivs][1];
+    double norm_real[num_vectors];
+    double norm_imag[num_vectors];
+    double total_norm[num_vectors];
 
     for(int d = 0; d < numderivs; d++) {
       nderivs[d] = n_derivs[d] / g;
       deriv_real[d] = &deriv_real_in[offset];
       deriv_imag[d] = &deriv_imag_in[offset];
       offset += n_derivs[d];
+      dpr[d][0] = 0;
+      dpi[d][0] = 0;
 
-      for (int kk = 0; kk < num_vectors; kk++)
-	{
-	  fsum_real[kk + d*num_vectors] = 0;
-	  fsum_imag[kk + d*num_vectors] = 0;
-	}
+      // Empty
+      for (int kk = 0; kk < num_vectors; kk++) {
+	fsum_real[kk + d*numderivs] = 0;
+	fsum_imag[kk + d*numderivs] = 0;
+      }
     }
 
     for (int kk = 0; kk < num_vectors; kk++)
       {
-	double *x = &zr[kk*g];
+        norm_real[kk] = 0;
+        norm_imag[kk] = 0;
+        total_norm[kk] = 0;
+      }
 
-	double ept, cpt, spt;
-	double npt;
-	double* n;
-	double dpr[1];
-	double dpi[1];
+    double* n;
+    double npt, ept, cpt, spt;
 
-	double num_real[numderivs];
-	double num_imag[numderivs];
-	double den[numderivs];
+    for(int k = 0; k < N; k++) {
+      // the current point in S \subset ZZ^g
+      n = S + k*g;
+      npt = exp(normpart_phaseII(n, T, g));
 
-	for (int d = 0; d < numderivs; d++)
-	  {
-	    num_real[d] = 0;
-	    num_imag[d] = 0;
-	    den[d] = 0;
-	  }
+      for (int d = 0; d < numderivs; d++)
+	deriv_prod_phaseII(dpr[d], dpi[d], n, deriv_real[d], deriv_imag[d], nderivs[d], g);
 
-	for(int k = 0; k < N; k++) {
-	  // the current point in S \subset ZZ^g
-	  n = S + k*g;
+      // Loop over dataset
+      for (int kk = 0; kk < num_vectors; kk++)
+	{
+	  double *x = &zr[kk*g];
 
-	  npt = exp(normpart_phaseII(n, T, g));
+	  // compute the "cosine" and "sine" parts of the summand
 	  ept = exppart_phaseII(n, X, x, g);
 	  cpt = npt*cos(ept);
 	  spt = npt*sin(ept);
 
+	  norm_real[kk] += cpt;
+	  norm_imag[kk] += spt;
+	  total_norm[kk] += cpt*cpt + spt*spt;
+
 	  for (int d = 0; d < numderivs; d++)
 	    {
 	      if (n_derivs[d] > 0)
-		{
-		  dpr[0] = 0;
-		  dpi[0] = 0;
-
-		  deriv_prod_phaseII(dpr, dpi, n, deriv_real[d], deriv_imag[d], nderivs[d], g);
-
-		  // Loop over dataset
-		  num_real[d] += (dpr[0] * cpt - dpi[0] * spt) * cpt + (dpr[0] * spt + dpi[0] * cpt) * spt;
-		  num_imag[d] += (dpr[0] * spt + dpi[0] * cpt) * cpt + (dpr[0] * cpt - dpi[0] * spt) * spt;
-		  den[d] += spt*spt + cpt*cpt;
-		} else {
-		num_real[d] += npt;
-		den[d] += npt;
-	      }
+                {
+                  fsum_real[kk + d*num_vectors] += (dpr[d][0] * cpt - dpi[d][0] * spt);
+                  fsum_imag[kk + d*num_vectors] += (dpr[d][0] * spt + dpi[d][0] * cpt);
+                }
+	      else
+                {
+                  fsum_real[kk + d*num_vectors] += cpt*cpt + spt*spt;
+                }
 	    }
 	}
+    }
 
-	// Loop over dataset (setting normalization)
-	for (int d = 0; d < numderivs; d++)
+    // Loop over dataset (setting normalization)
+    for (int d = 0; d < numderivs; d++)
+      {
+	for (int kk = 0; kk < num_vectors; kk++)
 	  {
-	    fsum_real[kk + d*num_vectors] = num_real[d]/den[d];
-	    fsum_imag[kk + d*num_vectors] = num_imag[d]/den[d];
+	    fsum_imag[kk + d*num_vectors] = (fsum_imag[kk + d*num_vectors]*norm_real[kk]-fsum_real[kk + d*num_vectors]*norm_imag[kk])/total_norm[kk];
+	    fsum_real[kk + d*num_vectors] = (fsum_real[kk + d*num_vectors]*norm_real[kk]+fsum_imag[kk + d*num_vectors]*norm_imag[kk])/total_norm[kk];
 	  }
       }
   }
