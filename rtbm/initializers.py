@@ -19,6 +19,16 @@ class uniform(initializer):
     
 class normal(initializer):
     
-    def getinit(self, S, mean=0,sdev=1):
+    def getinit(self, S, mean=0, sdev=1):
         
         return np.random.normal(mean, sdev, S)
+    
+class glorot_normal(initializer):
+    def getinit(self, S):
+        return np.random.normal(0, 2.0/(S[0]+S[1]),S)
+    
+class glorot_uniform(initializer):
+    def getinit(self, S):
+        limit = np.sqrt(6.0/(S[0]+S[1]))
+                        
+        return np.random.uniform(-limit,limit,S)
