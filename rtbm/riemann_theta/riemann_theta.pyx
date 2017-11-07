@@ -79,6 +79,12 @@ cdef extern from "header.h":
     void finite_sum_with_derivatives_normalized_phaseII(double*, double*, double*, double*,
                                      double*, double*, double*, double*,
                                      double*, double*, int, int, int, int)
+    void finite_sum_with_multi_derivatives_normalized_phaseI(double*, double*,
+                                     double*, double*, double*, double*,
+                                     double*, double*, int*, int, int, int, int)
+    void finite_sum_with_multi_derivatives_normalized_phaseII(double*, double*,
+                                     double*, double*, double*, double*,
+                                     double*, double*, int*, int, int, int, int)
     
     
 @cython.boundscheck(False)
@@ -125,77 +131,138 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
     # of the imaginary part
     Omega = numpy.array(Omega, dtype=numpy.complex)
     Y = Omega.imag
-    _T = numpy.linalg.cholesky(Y).T
     X = numpy.ascontiguousarray(Omega.real)
-    
+   
+    if(Y.shape[0]!=1):
+        _T = numpy.linalg.cholesky(Y).T
+    else:
+        _T = numpy.sqrt(Y)
+
+    T = numpy.ascontiguousarray(_T)
+
     if(mode!=2):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
         
-    T = numpy.ascontiguousarray(_T)
-
+  
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
-    R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
-    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
-    N = S.shape[0]
+    if isinstance(derivs, list):
 
-    # set up storage locations and vectors
-    real = <double*>malloc(sizeof(double)*num_vectors)
-    imag = <double*>malloc(sizeof(double)*num_vectors)
-    values = numpy.zeros(num_vectors, dtype=numpy.complex)
+        R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
+        S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+        N = S.shape[0]
 
-    x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
-    y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+        # set up storage locations and vectors
+        real = <double*>malloc(sizeof(double)*num_vectors)
+        imag = <double*>malloc(sizeof(double)*num_vectors)
+        values = numpy.zeros(num_vectors, dtype=numpy.complex)
 
-    # get the derivatives
-    if len(derivs):
-        derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
-        nderivs = len(derivs) / g
-        derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
-        derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
+        x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+        y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
 
-        # compute the finite sum for each z-vector
-        if(mode==0):
-            finite_sum_with_derivatives(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-        elif(mode==1):
-            finite_sum_with_derivatives_phaseI(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-        elif(mode==2):
-            finite_sum_with_derivatives_phaseII(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-            
+        # get the derivatives
+        if len(derivs):
+            derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
+            nderivs = len(derivs) / g
+            derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
+            derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
+
+            # compute the finite sum for each z-vector
+            if(mode==0):
+                finite_sum_with_derivatives(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+            elif(mode==1):
+                finite_sum_with_derivatives_phaseI(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+            elif(mode==2):
+                finite_sum_with_derivatives_phaseII(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+        else:
+            # compute the finite sum for each z-vector
+            if(mode==0):
+                finite_sum_without_derivatives(real, imag,
+                                               &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
+            elif(mode==1):
+                finite_sum_without_derivatives_phaseI(real, imag,
+                                                      &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
+            elif(mode==2):
+                finite_sum_without_derivatives_phaseII(real, imag,
+                                                       &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
+
+
+        for k in range(num_vectors):
+            values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+        free(real)
+        free(imag)
+
+        if num_vectors == 1:
+            return values[0]
+        else:
+            return values
+
     else:
-        # compute the finite sum for each z-vector
-        if(mode==0):
-            finite_sum_without_derivatives(real, imag,
-                                           &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
-        elif(mode==1):
-            finite_sum_without_derivatives_phaseI(real, imag,
-                                                  &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
-        elif(mode==2):
-            finite_sum_without_derivatives_phaseII(real, imag,
-                                                   &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
-            
-            
-    for k in range(num_vectors):
-        values[k] = numpy.complex(real[k] + 1.0j*imag[k])
 
-    free(real)
-    free(imag)
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
+        real = <double*>malloc(sizeof(double)*num_vectors)
+        imag = <double*>malloc(sizeof(double)*num_vectors)
+        for i, value in enumerate(derivs):
 
-    if num_vectors == 1:
-        return values[0]
-    else:
-        return values
+            R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
+            S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+            N = S.shape[0]
+
+            # set up storage locations and vectors
+            values = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+            x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+            y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+
+            # get the derivatives
+            if len(value):
+                value = numpy.array(value, dtype=numpy.complex).flatten()
+                nderivs = len(value) / g
+                derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
+                derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
+
+                # compute the finite sum for each z-vector
+                if(mode==0):
+                    finite_sum_with_derivatives(real, imag,
+                                                &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                                &y[0], &S[0,0],
+                                                &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+                elif(mode==1):
+                    finite_sum_with_derivatives_phaseI(real, imag,
+                                                &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                                &y[0], &S[0,0],
+                                                &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+                elif(mode==2):
+                    finite_sum_with_derivatives_phaseII(real, imag,
+                                                &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                                &y[0], &S[0,0],
+                                                &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+            for k in range(num_vectors):
+                values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+            if num_vectors == 1:
+                output[i] = values[0]
+            else:
+                output[i] = values
+
+        free(real)
+        free(imag)
+
+        return output
 
 
 @cython.boundscheck(False)
@@ -224,6 +291,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
     cdef double* imag
     cdef double[:] derivs_real
     cdef double[:] derivs_imag
+    cdef int[:] n_derivs
     cdef int nderivs
 
     # coerce z to a numpy array and determine the problem size: the genus g and
@@ -242,87 +310,191 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
     # of the imaginary part
     Omega = numpy.array(Omega, dtype=numpy.complex)
     Y = Omega.imag
-    _T = numpy.linalg.cholesky(Y).T
     X = numpy.ascontiguousarray(Omega.real)
-    
+
+    if(Y.shape[0]!=1):
+        _T = numpy.linalg.cholesky(Y).T
+    else:
+        _T = numpy.sqrt(Y)
+        
+    T = numpy.ascontiguousarray(_T)
+
     if(mode!=2):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
         
-    T = numpy.ascontiguousarray(_T)
-
+    
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
-    R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
-    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
-    N = S.shape[0]
+    if isinstance(derivs, list):
 
-    # set up storage locations and vectors
-    real = <double*>malloc(sizeof(double)*num_vectors)
-    imag = <double*>malloc(sizeof(double)*num_vectors)
-    
-    values = numpy.zeros(num_vectors, dtype=numpy.complex)
-    
-    x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
-    y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+        R = radius(epsilon, _T, derivs=derivs, accuracy_radius=accuracy_radius)
+        S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+        N = S.shape[0]
 
-    # get the derivatives
-    if len(derivs):
-        derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
-        nderivs = len(derivs) / g
-        derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
-        derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
+        # set up storage locations and vectors
+        real = <double*>malloc(sizeof(double)*num_vectors)
+        imag = <double*>malloc(sizeof(double)*num_vectors)
+
+        values = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+        x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+        y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+
+        # get the derivatives
+        if len(derivs):
+            derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
+            nderivs = len(derivs) / g
+            derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
+            derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
+
+            # compute the finite sum for each z-vector
+            if(mode==0):
+                values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
+                values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+                finite_sum_with_derivatives(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+                for k in range(num_vectors):
+                    values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+                finite_sum_without_derivatives(real, imag,
+                                               &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
+                for k in range(num_vectors):
+                    values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+                values = values_nom/values_den
+
+            elif(mode==1):
+                finite_sum_with_derivatives_normalized_phaseI(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+                for k in range(num_vectors):
+                    values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+            elif(mode==2):
+                finite_sum_with_derivatives_normalized_phaseII(real, imag,
+                                            &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                            &y[0], &S[0,0],
+                                            &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+                for k in range(num_vectors):
+                    values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+        else:
+            return numpy.ones(z.shape);
+
+
+        free(real)
+        free(imag)
+
+        if num_vectors == 1:
+            return values[0]
+        else:
+            return values
+
+    else:
+
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
 
         # compute the finite sum for each z-vector
-        if(mode==0):
-            values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
-            values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
-    
-            finite_sum_with_derivatives(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-            
-            for k in range(num_vectors):
-                values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
-            
-            finite_sum_without_derivatives(real, imag,
-                                           &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
-            for k in range(num_vectors):
-                values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
-            
-            values = values_nom/values_den
-            
-        elif(mode==1):
-            finite_sum_with_derivatives_normalized_phaseI(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-            
-            for k in range(num_vectors):
-                values[k] = numpy.complex(real[k] + 1.0j*imag[k])
-                
-        elif(mode==2):
-            finite_sum_with_derivatives_normalized_phaseII(real, imag,
-                                        &X[0,0], &Yinv[0,0], &T[0,0],&x[0], 
-                                        &y[0], &S[0,0],
-                                        &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
-            
-            for k in range(num_vectors):
-                values[k] = numpy.complex(real[k] + 1.0j*imag[k])
-            
-    else:
-        return numpy.ones(z.shape);
-            
+        if mode == 0:
 
-    free(real)
-    free(imag)
+            real = <double*>malloc(sizeof(double)*num_vectors)
+            imag = <double*>malloc(sizeof(double)*num_vectors)
 
-    if num_vectors == 1:
-        return values[0]
-    else:
-        return values
+            for i, value in enumerate(derivs):
+                # get the derivatives
+                if len(value):
+                    value = numpy.array(value, dtype=numpy.complex).flatten()
+                    nderivs = len(value) / g
+                    derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
+                    derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
+
+                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
+                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+                    N = S.shape[0]
+
+                    # set up storage locations and vectors
+                    values = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+                    x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+                    y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+
+                    values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
+                    values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
+
+                    finite_sum_with_derivatives(real, imag,
+                                                &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
+                                                &y[0], &S[0,0],
+                                                &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
+
+                    for k in range(num_vectors):
+                        values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+                    finite_sum_without_derivatives(real, imag,
+                                                   &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
+                    for k in range(num_vectors):
+                        values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
+
+                    values = values_nom/values_den
+
+                else:
+                    free(real)
+                    free(imag)
+                    return numpy.ones(z.shape)
+
+                if num_vectors == 1:
+                    output[i] = values[0]
+                else:
+                    output[i] = values
+
+            free(real)
+            free(imag)
+        else:
+
+            R = radius(epsilon, _T, derivs=max(derivs, key=len), accuracy_radius=accuracy_radius)
+            S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+            N = S.shape[0]
+
+            # set up storage locations and vectors
+            n_derivs = numpy.ascontiguousarray([len(item) for item in derivs], dtype=numpy.int32)
+            inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex)
+            derivs_real = numpy.ascontiguousarray(inderivs.real, dtype=numpy.double)
+            derivs_imag = numpy.ascontiguousarray(inderivs.imag, dtype=numpy.double)
+
+            real = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
+            imag = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
+
+            if mode == 1:
+                y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
+                finite_sum_with_multi_derivatives_normalized_phaseI(real, imag, &Yinv[0,0], &T[0,0], &y[0], &S[0,0],
+                                                                    &derivs_real[0], &derivs_imag[0], &n_derivs[0],
+                                                                    len(derivs), g, N, num_vectors)
+            if mode == 2:
+                x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
+                finite_sum_with_multi_derivatives_normalized_phaseII(real, imag, &X[0,0], &T[0,0], &x[0], &S[0,0],
+                                                                     &derivs_real[0], &derivs_imag[0], &n_derivs[0],
+                                                                     len(derivs), g, N, num_vectors)
+
+            for i in range(derivs.shape[0]):
+                    if num_vectors == 1:
+                        output[i] = numpy.complex(real[i] + 1.0j*imag[i])
+                    else:
+                        for k in range(num_vectors):
+                            output[i, k] = numpy.complex(real[k+i*num_vectors] + 1.0j*imag[k+i*num_vectors])
+
+            free(real)
+            free(imag)
+
+        return output
+
     
     
     
@@ -382,8 +554,8 @@ cdef class RiemannTheta_Function(object):
         """
         u = self.exponential_part(z, Omega, **kwds)
         v = self.oscillatory_part(z, Omega, mode, **kwds)
-        values = numpy.exp(u)*v
-        return values
+
+        return numpy.exp(u)*v
 
     def log_eval(self, z, Omega, mode=0, **kwds):
         r"""Returns the value of the log Riemann theta function at `z` and `Omega`.
@@ -415,14 +587,15 @@ cdef class RiemannTheta_Function(object):
             u = 0
             
         v = self.oscillatory_part(z, Omega, mode, **kwds)
-        values = u + numpy.log(v)
-        return values
+
+        return u + numpy.log(v)
 
     def parts_eval(self, z, Omega, mode=0, **kwds):
         r"""Returns the log(exponential) and oscillatory part
         """
         u = self.exponential_part(z, Omega, **kwds)
         v = self.oscillatory_part(z, Omega, mode, **kwds)
+
         return u, v
 
 

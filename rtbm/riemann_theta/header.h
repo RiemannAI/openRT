@@ -29,6 +29,12 @@ void finite_sum_with_derivatives_normalized_phaseI(double*, double*, double*, do
 void finite_sum_with_derivatives_normalized_phaseII(double*, double*, double*, double*,
                                  double*, double*, double*, double*,
                                  double*, double*, int, int, int, int);
+void finite_sum_with_multi_derivatives_normalized_phaseI(double*, double*,
+                                     double*, double*, double*, double*,
+                                     double*, double*, int*, int, int, int, int);
+void finite_sum_with_multi_derivatives_normalized_phaseII(double*, double*,
+                                     double*, double*, double*, double*,
+                                     double*, double*, int*, int, int, int, int);
 
 // radius.pyx
 void lll_reduce(double*, int, double, double);
