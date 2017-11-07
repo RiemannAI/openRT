@@ -115,7 +115,7 @@ class CMA(object):
 class SGD(object):
     """ Implements standard stochastic gradient descent """
     """ ToDo: Batch training """
-    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.0001, momentum=0,nesterov=False, noise=0, log_step=100):
+    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.001, momentum=0,nesterov=False, noise=0, log_step=100):
         oldG = np.zeros(model.get_parameters().shape)
         
         # Generate batches

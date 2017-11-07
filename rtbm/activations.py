@@ -34,7 +34,7 @@ class sigmoid(actfunc):
         e = np.exp(x)
         return e/((1+e)**2)
     
-class Tanh(actfunc):
+class tanh(actfunc):
     """ The tanh """
 
     def activation(self, x):   
