@@ -131,16 +131,21 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
     # of the imaginary part
     Omega = numpy.array(Omega, dtype=numpy.complex)
     Y = Omega.imag
-    _T = numpy.linalg.cholesky(Y).T
     X = numpy.ascontiguousarray(Omega.real)
-    
+   
+    if(Y.shape[0]!=1):
+        _T = numpy.linalg.cholesky(Y).T
+    else:
+        _T = numpy.sqrt(Y)
+
+    T = numpy.ascontiguousarray(_T)
+
     if(mode!=2):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
         
-    T = numpy.ascontiguousarray(_T)
-
+  
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
     if isinstance(derivs, list):
@@ -305,16 +310,21 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
     # of the imaginary part
     Omega = numpy.array(Omega, dtype=numpy.complex)
     Y = Omega.imag
-    _T = numpy.linalg.cholesky(Y).T
     X = numpy.ascontiguousarray(Omega.real)
-    
+
+    if(Y.shape[0]!=1):
+        _T = numpy.linalg.cholesky(Y).T
+    else:
+        _T = numpy.sqrt(Y)
+        
+    T = numpy.ascontiguousarray(_T)
+
     if(mode!=2):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
         
-    T = numpy.ascontiguousarray(_T)
-
+    
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
     if isinstance(derivs, list):
