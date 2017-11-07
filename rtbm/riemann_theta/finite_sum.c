@@ -1088,82 +1088,82 @@ finite_sum_with_multi_derivatives_normalized_phaseII(double* fsum_real, double* 
                             double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
                             int numderivs, int g, int N, int num_vectors)
 {
-  int offset = 0;
-  for (int d = 0; d < numderivs; d++)
-  {
-    if (n_derivs[d] > 0)
-    {
-      int nderivs = n_derivs[d] / g;
-      double *deriv_real = &deriv_real_in[offset];
-      double *deriv_imag = &deriv_imag_in[offset];
-      offset += n_derivs[d];
+   // Init
+   int offset = 0;
+   int nderivs[numderivs];
+   double *deriv_real[numderivs];
+   double *deriv_imag[numderivs];
 
-      // Allocate temp storage
-      double norm_real[num_vectors];
-      double norm_imag[num_vectors];
+   for(int d = 0; d < numderivs; d++) {
+       nderivs[d] = n_derivs[d] / g;
+       deriv_real[d] = &deriv_real_in[offset];
+       deriv_imag[d] = &deriv_imag_in[offset];
+       offset += n_derivs[d];
 
       for (int kk = 0; kk < num_vectors; kk++)
       {
-         // Empty
-         fsum_real[kk] = 0;
-         fsum_imag[kk] = 0;
-         norm_real[kk] = 0;
-         norm_imag[kk] = 0;
+         fsum_real[kk + d*num_vectors] = 0;
+         fsum_imag[kk + d*num_vectors] = 0;
       }
+   }
 
+   for (int kk = 0; kk < num_vectors; kk++)
+   {
+      double *x = &zr[kk*g];
+
+      double ept, cpt, spt;
+      double npt;
       double* n;
       double dpr[1];
       double dpi[1];
 
+      double num_real[numderivs];
+      double num_imag[numderivs];
+      double den[numderivs];
+
+      for (int d = 0; d < numderivs; d++)
+      {
+        num_real[d] = 0;
+        num_imag[d] = 0;
+        den[d] = 0;
+      }
+
       for(int k = 0; k < N; k++) {
           // the current point in S \subset ZZ^g
           n = S + k*g;
-          double npt = exp(normpart_phaseII(n, T, g));
 
-          dpr[0] = 0;
-          dpi[0] = 0;
+          npt = exp(normpart_phaseII(n, T, g));
+          ept = exppart_phaseII(n, X, x, g);
+          cpt = npt*cos(ept);
+          spt = npt*sin(ept);
 
-          deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
-
-          // Loop over dataset
-          for (int kk = 0; kk < num_vectors; kk++)
+          for (int d = 0; d < numderivs; d++)
           {
-              double *x = &zr[kk*g];
+            if (n_derivs[d] > 0)
+            {
+              dpr[0] = 0;
+              dpi[0] = 0;
 
-              // compute the finite sum
-              double ept, cpt, spt;
+              deriv_prod_phaseII(dpr, dpi, n, deriv_real[d], deriv_imag[d], nderivs[d], g);
 
-              // compute the "cosine" and "sine" parts of the summand
-              ept = exppart_phaseII(n, X, x, g);
-              cpt = npt*cos(ept);
-              spt = npt*sin(ept);
-
-              fsum_real[kk + d*num_vectors] += (dpr[0] * cpt - dpi[0] * spt);
-              fsum_imag[kk + d*num_vectors] += (dpr[0] * spt + dpi[0] * cpt);
-              norm_real[kk + d*num_vectors] += cpt;
-              norm_imag[kk + d*num_vectors] += spt;
+              // Loop over dataset
+              num_real[d] += (dpr[0] * cpt - dpi[0] * spt) * cpt + (dpr[0] * spt + dpi[0] * cpt) * spt;
+              num_imag[d] += (dpr[0] * spt + dpi[0] * cpt) * cpt + (dpr[0] * cpt - dpi[0] * spt) * spt;
+              den[d] += spt*spt + cpt*cpt;
+            } else {
+              num_real[d] += npt;
+              den[d] += npt;
+            }
           }
        }
 
        // Loop over dataset (setting normalization)
-       for (int kk = 0; kk < num_vectors; kk++)
+       for (int d = 0; d < numderivs; d++)
        {
-           double old_fsum_real = fsum_real[kk + d*num_vectors];
-           double norm = norm_imag[kk + d*num_vectors]*norm_imag[kk + d*num_vectors]+norm_real[kk + d*num_vectors]*norm_real[kk + d*num_vectors];
-
-           fsum_real[kk + d*num_vectors] = (fsum_real[kk + d*num_vectors]*norm_real[kk + d*num_vectors]+fsum_imag[kk + d*num_vectors]*norm_imag[kk + d*num_vectors])/norm;
-           fsum_imag[kk + d*num_vectors] = (fsum_imag[kk + d*num_vectors]*norm_real[kk + d*num_vectors]-old_fsum_real*norm_imag[kk + d*num_vectors])/norm;
+           fsum_real[kk + d*num_vectors] = num_real[d]/den[d];
+           fsum_imag[kk + d*num_vectors] = num_imag[d]/den[d];
        }
     }
-    else
-    {
-        for (int kk = 0; kk < num_vectors; kk++)
-        {
-            fsum_real[kk + d*num_vectors] = 1.0;
-            fsum_imag[kk + d*num_vectors] = 0.0;
-        }
-    }
-  }
 }
     
     
