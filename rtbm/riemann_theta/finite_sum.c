@@ -991,7 +991,6 @@ finite_sum_with_multi_derivatives_normalized_phaseI(double* fsum_real, double* f
                             double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
                             int numderivs, int g, int N, int num_vectors)
 {
-
     // Init
     int offset = 0;
     int nderivs[numderivs];
@@ -1076,8 +1075,96 @@ finite_sum_with_multi_derivatives_normalized_phaseI(double* fsum_real, double* f
     }
 }
 
-    
 
+/*
+ *   Phase II
+ *   Simplified version for purely imaginary Q and purely real z
+ *
+ */
+
+void
+finite_sum_with_multi_derivatives_normalized_phaseII(double* fsum_real, double* fsum_imag,
+                            double* X, double* T, double* zr, double* S,
+                            double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
+                            int numderivs, int g, int N, int num_vectors)
+{
+  int offset = 0;
+  for (int d = 0; d < numderivs; d++)
+  {
+    if (n_derivs[d] > 0)
+    {
+      int nderivs = n_derivs[d] / g;
+      double *deriv_real = &deriv_real_in[offset];
+      double *deriv_imag = &deriv_imag_in[offset];
+      offset += n_derivs[d];
+
+      // Allocate temp storage
+      double norm_real[num_vectors];
+      double norm_imag[num_vectors];
+
+      for (int kk = 0; kk < num_vectors; kk++)
+      {
+         // Empty
+         fsum_real[kk] = 0;
+         fsum_imag[kk] = 0;
+         norm_real[kk] = 0;
+         norm_imag[kk] = 0;
+      }
+
+      double* n;
+      double dpr[1];
+      double dpi[1];
+
+      for(int k = 0; k < N; k++) {
+          // the current point in S \subset ZZ^g
+          n = S + k*g;
+          double npt = exp(normpart_phaseII(n, T, g));
+
+          dpr[0] = 0;
+          dpi[0] = 0;
+
+          deriv_prod_phaseII(dpr, dpi, n, deriv_real, deriv_imag, nderivs, g);
+
+          // Loop over dataset
+          for (int kk = 0; kk < num_vectors; kk++)
+          {
+              double *x = &zr[kk*g];
+
+              // compute the finite sum
+              double ept, cpt, spt;
+
+              // compute the "cosine" and "sine" parts of the summand
+              ept = exppart_phaseII(n, X, x, g);
+              cpt = npt*cos(ept);
+              spt = npt*sin(ept);
+
+              fsum_real[kk + d*num_vectors] += (dpr[0] * cpt - dpi[0] * spt);
+              fsum_imag[kk + d*num_vectors] += (dpr[0] * spt + dpi[0] * cpt);
+              norm_real[kk + d*num_vectors] += cpt;
+              norm_imag[kk + d*num_vectors] += spt;
+          }
+       }
+
+       // Loop over dataset (setting normalization)
+       for (int kk = 0; kk < num_vectors; kk++)
+       {
+           double old_fsum_real = fsum_real[kk + d*num_vectors];
+           double norm = norm_imag[kk + d*num_vectors]*norm_imag[kk + d*num_vectors]+norm_real[kk + d*num_vectors]*norm_real[kk + d*num_vectors];
+
+           fsum_real[kk + d*num_vectors] = (fsum_real[kk + d*num_vectors]*norm_real[kk + d*num_vectors]+fsum_imag[kk + d*num_vectors]*norm_imag[kk + d*num_vectors])/norm;
+           fsum_imag[kk + d*num_vectors] = (fsum_imag[kk + d*num_vectors]*norm_real[kk + d*num_vectors]-old_fsum_real*norm_imag[kk + d*num_vectors])/norm;
+       }
+    }
+    else
+    {
+        for (int kk = 0; kk < num_vectors; kk++)
+        {
+            fsum_real[kk + d*num_vectors] = 1.0;
+            fsum_imag[kk + d*num_vectors] = 0.0;
+        }
+    }
+  }
+}
     
     
 #ifdef __cplusplus
