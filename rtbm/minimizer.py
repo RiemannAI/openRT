@@ -113,9 +113,20 @@ class CMA(object):
 
 
 class SGD(object):
-    """ Implements standard stochastic gradient descent """
-    """ ToDo: Batch training """
-    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.001, momentum=0,nesterov=False, noise=0, log_step=100):
+    """ Stochastic gradient descent 
+        
+        maxiter: Iterations
+        batch_size: Batch size
+        lr: learning rate
+        momentum: Momentum
+        Nesterov: Nesterov momentum
+        Noise: Gaussian noise 
+        decay: Learning rate decay rate
+      
+    """
+    
+    
+    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0, lr=0.001, decay=0, momentum=0,nesterov=False, noise=0, log_step=100):
         oldG = np.zeros(model.get_parameters().shape)
         
         # Generate batches
@@ -167,10 +178,12 @@ class SGD(object):
                 # Set gradients
                 model.set_parameters(W)
             
+            # Decay learning rate
+            lr = lr*(1-decay)
             
             if i % log_step == 0:
-                print("Batch C: ",C)
-                C = cost.cost(model.feed_through(x_data, True),y_data)
+                #print("Batch C: ",C)
+                #C = cost.cost(model.feed_through(x_data, True),y_data)
                 print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0, C))
             
         print("Cost: ",C)    

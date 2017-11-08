@@ -23,7 +23,7 @@ class mse(costfunction):
         return np.sum(np.mean((x-y)**2,axis=1))
    
     def gradient(self, x, y):
-        return 2*(x-y)#/y.shape[1]
+        return 2*(x-y)
     
         
 class logarithmic(costfunction):

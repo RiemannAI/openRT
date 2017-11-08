@@ -310,9 +310,9 @@ class SoftMaxLayer(Layer):
         """ Propagates the error E through the layer """
         
         # Propagate error
-        #return E*self._pO+self._pO.dot(E.T.dot(self._pO))
-        return E.T.dot(self._pO)+self._pO.dot(E.T.dot(self._pO))
-    
+        return E*self._pO+self._pO.dot(E.T.dot(self._pO))
+        
+        
 class MaxPosLayer(Layer):
     """ Depreciated 
     
