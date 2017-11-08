@@ -189,7 +189,7 @@ def hidden_expectations(v, bh, w, q):
     return E
 
 
-def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
+def factorized_hidden_expectations(vWb, q, phaseI=False):
     """ Implements E(h|v) in factorized form for q diagonal
         Note: Does not check if q is actual diagonal (for performance)
 
@@ -197,10 +197,7 @@ def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
     """
     Nh = q.shape[0]
 
-    vW = np.transpose(v).dot(w)
-
-    E = np.zeros((Nh,v.shape[1]), dtype=complex)
-    
+    E = np.zeros((Nh,vWb.shape[0]), dtype=complex)
     
     for i in range(Nh):
         O = np.matrix([[q[i, i]]], dtype=complex)
@@ -211,7 +208,21 @@ def factorized_hidden_expectations(v, bh, w, q, phaseI=False):
             O[0,0] = np.abs(O[0,0])
         
         if(phaseI==True):
-            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval((vW[:, [i]] + bh[i])/ (2.0j * np.pi), -O/ (2.0j * np.pi), mode=1, epsilon=RTBM_precision, derivs=[[1]])
+            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval(vWb[:, [i]] / (2.0j * np.pi), -O/ (2.0j * np.pi), mode=1, epsilon=RTBM_precision, derivs=[[1]])
         else:
-            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval((vW[:, [i]] + bh[i])/ (2.0j * np.pi), -O/ (2.0j * np.pi), mode=2, epsilon=RTBM_precision, derivs=[[1]])
+            E[i] = -1.0/(2j*np.pi)*RiemannTheta.normalized_eval(vWb[:, [i]] / (2.0j * np.pi), -O/ (2.0j * np.pi), mode=2, epsilon=RTBM_precision, derivs=[[1]])
     return E
+
+
+
+def factorized_hidden_expectation_backprop(vWb, q, mode=1):
+    Tn = np.zeros((3, vWb.shape[1], vWb.shape[0]), dtype=complex)
+    
+    for i in range(0, vWb.shape[1]): 
+        O = np.matrix([[q[i, i]]], dtype=complex)
+       
+        Tn[:,i,:]  =  RiemannTheta.normalized_eval(vWb[:,[i]] / (2.0j * np.pi) , -O/ (2.0j * np.pi), mode=mode, derivs=np.array( [ [1], [1,1], [1,1,1] ]  )   )
+    
+    
+    return Tn 
+    

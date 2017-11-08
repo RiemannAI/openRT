@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from mathtools import factorized_hidden_expectations,theta_1d,logtheta_1d_phaseI, logtheta_1d
+from mathtools import factorized_hidden_expectations,factorized_hidden_expectation_backprop
 from riemann_theta.riemann_theta import RiemannTheta
 
 import time
@@ -304,14 +304,16 @@ class DiagExpectationUnitLayer(Layer):
         """ Feeds in the data X and returns the output of the layer 
             Note: Vectorized 
         """
-        
+        vWb = np.transpose(X).dot(self._w)+self._bh.T
+
         if(grad_calc==True):
             self._X = X
-        
+            self._vWb = vWb
+            
         if(self._phase==1):
-            return 1.0/self._phase*np.array(factorized_hidden_expectations(X,self._bh,self._w,self._q, True))
+            return 1.0/self._phase*np.array(factorized_hidden_expectations(vWb,self._q, True))
         else:
-            return 1.0/self._phase*np.array(factorized_hidden_expectations(X,self._bh,self._w,self._q, False))
+            return 1.0/self._phase*np.array(factorized_hidden_expectations(vWb,self._q, False))
 
     def get_parameters(self):
         """ Returns the parameters as a flat array 
@@ -348,64 +350,21 @@ class DiagExpectationUnitLayer(Layer):
     
     def backprop(self, E):
         """ Propagates the error E through the layer and stores gradient """
-       
-        # Calc ingredients
-        vWb = np.transpose(self._X).dot(self._w)+self._bh.T
-        
-        T1n = np.zeros((self._Nout, self._X.shape[1]))
-        T2n = np.zeros((self._Nout, self._X.shape[1]))
-        T3n = np.zeros((self._Nout, self._X.shape[1]))
-       
-        if(self._phase!=1):
-            for i in range(0,self._Nout):  
-                O = np.matrix([[self._q[i, i]]], dtype=complex)
-            
-                T0 = theta_1d( vWb[:, [i]], O, 0)
-               
-                T1n[i] = theta_1d( vWb[:, [i]], O, 1)/T0
-                T2n[i] = theta_1d( vWb[:, [i]], O, 2)/T0
-                T3n[i] = theta_1d( vWb[:, [i]], O, 3)/T0
-              
+     
+        if(self._phase==1):
+            Tn = factorized_hidden_expectation_backprop(self._vWb, self._q, mode=1)
         else:
-            for i in range(0,self._Nout):  
-                O = np.matrix([[np.real(self._q[i, i])]], dtype=float)
-                
-                T0 = logtheta_1d_phaseI( np.real(vWb[:, [i]]), O, 0)
-                T1n[i] = np.exp(logtheta_1d_phaseI( np.real(vWb[:, [i]]), O, 1)-T0)
-                T2n[i] = np.exp(logtheta_1d_phaseI( np.real(vWb[:, [i]]), O, 2)-T0)
-                T3n[i] = np.exp(logtheta_1d_phaseI( np.real(vWb[:, [i]]), O, 3)-T0)
-                
-               # tic = time.clock()
-                """
-                r0 = pool.apply_async(logtheta_1d_phaseI, [np.real(vWb[:, [i]]), O, 0])  
-                r1 = pool.apply_async(logtheta_1d_phaseI, [np.real(vWb[:, [i]]), O, 1])  
-                r2 = pool.apply_async(logtheta_1d_phaseI, [np.real(vWb[:, [i]]), O, 2])  
-                r3 = pool.apply_async(logtheta_1d_phaseI, [np.real(vWb[:, [i]]), O, 3])  
-          
-                T0 = np.exp(r0.get(timeout=10))
-                T1n[i] = np.exp(r1.get(timeout=10)-T0)
-                T2n[i] = np.exp(r2.get(timeout=10)-T0)
-                T3n[i] = np.exp(r3.get(timeout=10)-T0)
-                """
-              
-               # toc = time.clock()
-               # print("4x logtheta: "+str(1000*(toc-tic))+"ms"+" O: ", O, "sV: ",vWb[:, [i]].shape ,"maxV: ",np.max(np.abs(np.real(vWb[:, [i]]))) )
-            
-        if(np.isnan(T1n).any() or np.isnan(T2n).any() or np.isnan(T3n).any()   ):
-            print("NaN detected in T1n")
-            print("T1n:",T1n)
-            print("T2n:",T2n)
-            print("T3n:",T3n)
+            Tn = factorized_hidden_expectation_backprop(self._vWb, self._q, mode=2)
+    
+        T1nSquare = Tn[0]*Tn[0]*1.0/(2j*np.pi)**2
         
-        T1nSquare = T1n*T1n
-        
-        kappa = -(T2n-T1nSquare)
+        kappa = -(Tn[1]*1.0/(2j*np.pi)**2 - T1nSquare)
         
         # B grad
         self._gradB = np.mean(kappa*E,axis=1,keepdims=True)
         
         # Q grad
-        rho = (T3n - T1n*T2n)*E
+        rho = (Tn[2] - Tn[0]*Tn[1])*E*1.0/(2j*np.pi)**3
         
         self._gradQ = np.diag(np.mean(rho, axis=1).flatten())
         
