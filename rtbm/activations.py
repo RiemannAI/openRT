@@ -42,3 +42,16 @@ class tanh(actfunc):
    
     def gradient(self, x):
         return 1.0/(np.cosh(x)**2)
+
+    
+class softmax(actfunc):
+    """ Softmax """
+    
+    def activation(self,x):
+        E = np.exp(x)
+        S = np.sum(E,axis=0) 
+    
+        return np.divide(E, S[np.newaxis,:])
+        
+    def gradient(self, x):
+        return 0

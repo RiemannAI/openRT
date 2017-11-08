@@ -221,14 +221,14 @@ class NonLinear(Layer):
         if(grad_calc==True):
             self._pO = X
             self._D = self._act.gradient(L)
-        
+            
         return self._act.activation(L)
     
     def backprop(self, E):
         """ Propagates the error E through the layer and stores gradient """
        
         # Calc error at outputs
-        Delta = np.multiply(self._D,E)
+        Delta = np.multiply(self._D,E) 
        
         # Mean bias gradient
         self._gradB = np.mean(Delta, axis=1,keepdims=True)
@@ -310,7 +310,8 @@ class SoftMaxLayer(Layer):
         """ Propagates the error E through the layer """
         
         # Propagate error
-        return E*self._pO+self._pO.dot(E.T.dot(self._pO))
+        #return E*self._pO+self._pO.dot(E.T.dot(self._pO))
+        return E.T.dot(self._pO)+self._pO.dot(E.T.dot(self._pO))
     
 class MaxPosLayer(Layer):
     """ Depreciated 
@@ -354,7 +355,7 @@ class MaxPosLayer(Layer):
 class DiagExpectationUnitLayer(Layer):
     """ A layer of log-gradient theta units """
 
-    def __init__(self, Nin, Nout, Wmax=1,Bmax=1,Qmax=10, phase=1, param_bound=10):
+    def __init__(self, Nin, Nout, W_init=uniform(2,0),B_init=uniform(2,0),Q_init=uniform(5,5+1e-5), param_bound=11, phase=1):
         self._Nin = Nin
         self._Nout = Nout
         self._phase = phase
@@ -365,10 +366,10 @@ class DiagExpectationUnitLayer(Layer):
         if(phase == 1):
             dtype = float
             
-        self._bh = phase*np.random.uniform(-Bmax, Bmax,(Nout,1)).astype(dtype)
-        self._w = phase*np.random.uniform(-Wmax, Wmax,(Nin,Nout)).astype(dtype)
+        self._bh = phase*B_init.getinit((Nout,1)).astype(dtype)
+        self._w = phase*W_init.getinit((Nin,Nout)).astype(dtype)
         
-        self._q = Qmax*np.diag(np.random.rand(Nout)).astype(complex)
+        self._q = np.diag(Q_init.getinit((Nout,))).astype(complex)
      
         self._Np = 2*self._Nout+self._Nout*self._Nin
         
@@ -388,6 +389,7 @@ class DiagExpectationUnitLayer(Layer):
         
         self._bounds = [lower_bounds, upper_bounds]
         
+        """ ToDo: bound check for init """
         
     def show_activation(self, N, bound=2):
         """

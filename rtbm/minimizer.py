@@ -169,6 +169,8 @@ class SGD(object):
             
             
             if i % log_step == 0:
+                print("Batch C: ",C)
+                C = cost.cost(model.feed_through(x_data, True),y_data)
                 print("Iteration %d in %.2f(s), cost = %f" % (i,time.time()-t0, C))
             
         print("Cost: ",C)    

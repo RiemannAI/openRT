@@ -20,10 +20,10 @@ class mse(costfunction):
     """ Mean squared error """
 
     def cost(self, x, y):   
-        return 0.5*np.sum(np.mean((y-x)**2,axis=1))
+        return np.sum(np.mean((x-y)**2,axis=1))
    
     def gradient(self, x, y):
-        return (x-y)#/y.shape[1]
+        return 2*(x-y)#/y.shape[1]
     
         
 class logarithmic(costfunction):

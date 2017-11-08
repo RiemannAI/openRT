@@ -8,20 +8,26 @@ class initializer(object):
     __metaclass__ = ABCMeta
     
     @abstractmethod
-    def getinit(self, S, *bound):
+    def getinit(self, S):
         pass
-    
     
 class uniform(initializer):
     
-    def getinit(self, S, bound):
-        return np.random.uniform(-bound, bound, S)
+    def __init__(self, bound=1, center=0):
+        self._bound = bound
+        self._center = center
+    
+    def getinit(self, S):
+        return np.random.uniform(-self._bound, self._bound, S)+self._center
     
 class normal(initializer):
-    
-    def getinit(self, S, mean=0, sdev=1):
+    def __init__(self, mean=0, sdev=1):
+        self._mean = mean
+        self._sdev = sdev
+                
+    def getinit(self, S):
         
-        return np.random.normal(mean, sdev, S)
+        return np.random.normal(self._mean, self._sdev, S)
     
 class null(initializer):
     
@@ -35,6 +41,6 @@ class glorot_normal(initializer):
     
 class glorot_uniform(initializer):
     def getinit(self, S):
-        limit = np.sqrt(6.0)/(S[0]+S[1])
+        limit = np.sqrt(6.0/(S[0]+S[1]))
                         
         return np.random.uniform(-limit,limit,S)
