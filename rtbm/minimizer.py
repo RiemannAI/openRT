@@ -65,7 +65,7 @@ class CMA(object):
         grad = None
         if use_grad:
             grad = worker_gradient
-          
+
         es = CMAEvolutionStrategy(initsol, sigma, args)
         if self.num_cores > 1:
             with closing(mp.Pool(self.num_cores, initializer=worker_initialize,
@@ -114,14 +114,22 @@ class CMA(object):
 
 
 class SGD(object):
-    """ Implements standard stochastic gradient descent """
+    """ Stochastic gradient descent
 
-    def train(self, cost, model, x_data, y_data=None, maxiter=100,
-              batch_size=0, lr=0.0001, momentum=0,nesterov=False, noise=0):
-        """Performs the SGD training"""
+        maxiter: Iterations
+        batch_size: Batch size
+        lr: learning rate
+        momentum: Momentum
+        Nesterov: Nesterov momentum
+        Noise: Gaussian noise
+        decay: Learning rate decay rate
 
+    """
+
+    def train(self, cost, model, x_data, y_data=None, maxiter=100, batch_size=0,
+              lr=0.001, decay=0, momentum=0,nesterov=False, noise=0):
         oldG = np.zeros(model.get_parameters().shape)
-        
+
         # Generate batches
         RE = 0
         if(batch_size > 0):
@@ -131,44 +139,47 @@ class SGD(object):
         else:
             BS = 1
             batch_size = x_data.shape[1]
-            
+
         # Switch on/off noise
         nF = 0
         if noise > 0 :
             nF = 1
-            
+
         t0 = time.time()
-        
+
         # Loop over epoches
         for i in range(0, maxiter):
 
             # Loop over batches
             for b in range(0, BS+RE):
-                
+
                 data_x = x_data[:,b*batch_size:(b+1)*batch_size]
                 data_y = y_data[:,b*batch_size:(b+1)*batch_size]
-                
+
                 Xout = model.feed_through(data_x, True)
                 C = cost.cost(Xout,data_y)
                 model.backprop(cost.gradient(Xout,data_y))
-            
+
                 W = model.get_parameters()
-            
-                # Nesterov update 
+
+                # Nesterov update
                 if(nesterov==True):
                     model.set_parameters(W-oldG)
-            
+
                 # Get gradients
                 G = model.get_gradients()
-        
+
                 # Adjust weights (with momentum)
                 U = lr*G + momentum*oldG + nF*np.random.normal(0, lr/(1+i)**noise, oldG.shape)
                 oldG = U
-            
+
                 W = W - U
-            
+
                 # Set gradients
                 model.set_parameters(W)
+
+            # Decay learning rate
+            lr = lr*(1-decay)
 
             # print to screen
             self.progress_bar(i+1, maxiter, suffix="| iteration %d in %.2f(s) | cost = %f" % (i+1, time.time()-t0, C))

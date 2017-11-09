@@ -21,11 +21,11 @@
   * Chris Swierczewski (@cswiercz) - September 2012, July 2016
   * Grady Williams (@gradyrw) - October 2012
   * Jeremy Upsal (@jupsal) - July 2016
-  
+
   Mods and Phase I and II functions
   -------
   * Stefano Carrazza, Daniel Krefl - Nov 2017
-  
+
   =============================================================================*/
 
 #ifndef __FINITE_SUM_C__
@@ -104,7 +104,7 @@ extern "C" {
       dot += n[i]*x[i];
 
     return 2* M_PI * dot;
-  }    
+  }
 
 
 
@@ -148,7 +148,7 @@ extern "C" {
 
   /*
     Phase I
-  */  
+  */
   double
   normpart_phaseI(double* n, double* T, double* fracshift, int g)
   {
@@ -159,7 +159,7 @@ extern "C" {
     for (i = 0; i < g; i++) {
       tmp1[i] = n[i] + fracshift[i];
     }
-    
+
     // tmp2 = T*(n+fracshift)
     double norm = 0;
 
@@ -185,7 +185,7 @@ extern "C" {
   {
 
     int i,j;
-    
+
     // tmp2 = T*(n+fracshift)
     double norm = 0;
     double sum;
@@ -367,7 +367,7 @@ extern "C" {
       fsum_real[kk] = 0;
       fsum_imag[kk] = 0;
     }
-    
+
     double* n;
     int k;
 
@@ -391,7 +391,7 @@ extern "C" {
 	}
 
     }
-  }    
+  }
 
 
   /******************************************************************************
@@ -509,7 +509,7 @@ extern "C" {
     for (i = 0; i < g; i++) {
       nmintshift[i] = n[i] - intshift[i];
     }
-    
+
     /*
       Computes the dot product of each directional derivative and nmintshift.
       Then it computes the product of the resulting complex scalars.
@@ -833,7 +833,7 @@ extern "C" {
 	}
 
     }
-  }   
+  }
 
 
   /*
@@ -904,7 +904,7 @@ extern "C" {
 	fsum_real[kk] = real_total_nom/real_total_den;
 	fsum_imag[kk] = imag_total_nom/real_total_den;
       }
-  }    
+  }
 
 
   /*
@@ -924,7 +924,7 @@ extern "C" {
     // Allocate temp storage
     double norm_real[num_vectors];
     double norm_imag[num_vectors];
-    
+
     // Empty
     for (int kk = 0; kk < num_vectors; kk++) {
       fsum_real[kk] = 0;
@@ -976,7 +976,7 @@ extern "C" {
 	fsum_real[kk] = (fsum_real[kk]*norm_real[kk]+fsum_imag[kk]*norm_imag[kk])/norm;
 	fsum_imag[kk] = (fsum_imag[kk]*norm_real[kk]-old_fsum_real*norm_imag[kk])/norm;
       }
-    
+
   }
 
 
@@ -996,14 +996,14 @@ extern "C" {
     int nderivs[numderivs];
     double *deriv_real[numderivs];
     double *deriv_imag[numderivs];
-    
+
     for(int d = 0; d < numderivs; d++) {
       nderivs[d] = n_derivs[d] / g;
       deriv_real[d] = &deriv_real_in[offset];
       deriv_imag[d] = &deriv_imag_in[offset];
       offset += n_derivs[d];
     }
-    
+
     // Loop over dataset
     for (int kk = 0; kk < num_vectors; kk++)
       {
@@ -1046,7 +1046,7 @@ extern "C" {
 
 	  npt = exp(normpart(n, T, fracshift, g));
 	  real_total_den += npt;
-                    
+
 	  for (int d = 0; d < numderivs; d++)
 	    {
 	      if (n_derivs[d] > 0)
