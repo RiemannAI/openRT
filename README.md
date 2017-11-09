@@ -27,7 +27,6 @@ index 7230d28..df74e3a 100644
 
 Finally update and pull the git-submodule code:
 ```bash
-git submodule sync
 git submodule update --init --recursive --remote
 ```
 
