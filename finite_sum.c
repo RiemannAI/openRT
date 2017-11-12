@@ -194,7 +194,7 @@ extern "C" {
       for (j = 0; j < g; j++) {
 	sum += T[i*g + j] * n[j];
       }
-      norm = sum*sum;
+      norm += sum*sum;
     }
 
     return -M_PI * norm;
