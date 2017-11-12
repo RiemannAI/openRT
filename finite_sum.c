@@ -1106,8 +1106,8 @@ extern "C" {
      
       // Empty
       for (int kk = 0; kk < num_vectors; kk++) {
-        fsum_real[kk + d*numderivs] = 0;
-        fsum_imag[kk + d*numderivs] = 0;
+        fsum_real[kk + d*num_vectors] = 0;
+        fsum_imag[kk + d*num_vectors] = 0;
       }
     }
 
