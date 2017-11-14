@@ -627,6 +627,27 @@ cdef class RiemannTheta_Function(object):
         v = self.normalized_oscillatory_part(z, Omega, mode, **kwds)
        
         return v
+
+
+    def ratio_eval(self, z_A, z_B, Omega_A, Omega_B, mode=0, **kwds):
+        """ Returns the value of the ratio of two Riemann theta functions.
+
+        """
+        if(mode!=2):
+            u_A = self.exponential_part(z_A, Omega_A, **kwds)
+            u_B = self.exponential_part(z_B, Omega_B, **kwds)
+        else:
+            u_A = 0
+            u_B = 0
+            
+            
+        v_A = self.oscillatory_part(z_A, Omega_A, mode, **kwds)
+        # do not compute derivatives for B
+        kwds['derivs'] = []
+        v_B = self.oscillatory_part(z_B, Omega_B, mode, **kwds)
+
+        return numpy.exp(u_A-u_B)*(v_A/v_B)
+
     
     
     def exponential_part(self, z, Omega, axis=1, **kwds):
