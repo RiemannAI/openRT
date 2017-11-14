@@ -642,8 +642,10 @@ cdef class RiemannTheta_Function(object):
             
             
         v_A = self.oscillatory_part(z_A, Omega_A, mode, **kwds)
+        # do not compute derivatives for B
+        kwds['derivs'] = []
         v_B = self.oscillatory_part(z_B, Omega_B, mode, **kwds)
-        
+
         return numpy.exp(u_A-u_B)*(v_A/v_B)
 
     
