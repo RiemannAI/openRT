@@ -1178,6 +1178,168 @@ extern "C" {
     }
   }
 
+    
+    
+/*
+   *   Phase I
+   *   multi nth derivative 
+   *
+   */
+  void
+  finite_sum_with_multi_derivatives_phaseI(double* fsum_real, double* fsum_imag,
+						      double* Yinv, double* T, double* zi, double* S,
+						      double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
+						      int numderivs, int g, int N, int num_vectors)
+  {
+    // Init
+    int offset = 0;
+    int nderivs[numderivs];
+    double *deriv_real[numderivs];
+    double *deriv_imag[numderivs];
+
+    for(int d = 0; d < numderivs; d++) {
+      nderivs[d] = n_derivs[d] / g;
+      deriv_real[d] = &deriv_real_in[offset];
+      deriv_imag[d] = &deriv_imag_in[offset];
+      offset += n_derivs[d];
+    }
+
+    // Loop over dataset
+    for (int kk = 0; kk < num_vectors; kk++)
+      {
+        double *y = &zi[kk*g];
+
+        int k,j;
+
+        double intshift[g];
+        double fracshift[g];
+        double sum;
+
+        for (k = 0; k < g; k++) {
+	  sum = 0;
+	  for (j = 0; j < g; j++) {
+	    sum += Yinv[k*g + j] * y[j];
+	  }
+
+	  intshift[k] = round(sum);
+	  fracshift[k] = sum - intshift[k];
+        }
+
+        double npt;
+        double dpr[1];
+        double dpi[1];
+        double* n;
+
+        for(k = 0; k < N; k++) {
+
+	  n = S + k*g;
+
+	  npt = exp(normpart(n, T, fracshift, g));
+	  
+	  for (int d = 0; d < numderivs; d++)
+	    {
+	      if (n_derivs[d] > 0)
+		{
+		  dpr[0] = 0;
+		  dpi[0] = 0;
+
+		  deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real[d], deriv_imag[d], nderivs[d], g);
+
+		  fsum_real[kk + d*num_vectors] += dpr[0] * npt;
+		  fsum_imag[kk + d*num_vectors] += dpi[0] * npt;
+
+		} else {
+          fsum_real[kk + d*num_vectors] += npt;
+          
+	      }
+	    }
+        }
+
+        
+      }
+  }
+    
+
+/*
+   *   Phase II
+   *   Simplified version for purely imaginary Q and purely real z
+   *
+   */
+  void
+  finite_sum_with_multi_derivatives_phaseII(double* fsum_real, double* fsum_imag,
+						       double* X, double* T, double* zr, double* S,
+						       double* deriv_real_in, double* deriv_imag_in, int* n_derivs,
+						       int numderivs, int g, int N, int num_vectors)
+  {
+   
+    int offset = 0;
+    int nderivs[numderivs];
+    double *deriv_real[numderivs];
+    double *deriv_imag[numderivs];
+    double dpr[numderivs][1];
+    double dpi[numderivs][1];
+ 
+    for(int d = 0; d < numderivs; d++) {
+      nderivs[d] = n_derivs[d] / g;
+      deriv_real[d] = &deriv_real_in[offset];
+      deriv_imag[d] = &deriv_imag_in[offset];
+      offset += n_derivs[d];
+     
+      // Empty
+      for (int kk = 0; kk < num_vectors; kk++) {
+        fsum_real[kk + d*num_vectors] = 0;
+        fsum_imag[kk + d*num_vectors] = 0;
+      }
+    }
+
+    double* n;
+    double npt, ept, cpt, spt;
+
+    for(int k = 0; k < N; k++) {
+      // the current point in S \subset ZZ^g
+      n = S + k*g;
+      npt = exp(normpart_phaseII(n, T, g));
+
+      for (int d = 0; d < numderivs; d++) {
+        dpr[d][0] = 0;
+        dpi[d][0] = 0;   
+        deriv_prod_phaseII(dpr[d], dpi[d], n, deriv_real[d], deriv_imag[d], nderivs[d], g);
+      }
+        
+      // Loop over dataset
+      for (int kk = 0; kk < num_vectors; kk++)
+      {
+          double *x = &zr[kk*g];
+          
+          // compute the "cosine" and "sine" parts of the summand
+          ept = exppart_phaseII(n, X, x, g);
+          cpt = npt*cos(ept);
+          spt = npt*sin(ept);
+
+          for (int d = 0; d < numderivs; d++)
+          {
+              if (n_derivs[d] > 0)
+              {
+                  fsum_real[kk + d*num_vectors] += (dpr[d][0] * cpt - dpi[d][0] * spt);
+                  fsum_imag[kk + d*num_vectors] += (dpr[d][0] * spt + dpi[d][0] * cpt);
+              }
+              else
+              {
+                  fsum_real[kk + d*num_vectors] += cpt;
+                  fsum_imag[kk + d*num_vectors] += spt;
+                  
+              }
+          }
+       }
+    }
+
+   
+  }
+    
+    
+    
+    
+    
 
 #ifdef __cplusplus
 }
