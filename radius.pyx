@@ -1,3 +1,4 @@
+# cython: language_level=2
 r"""Riemann Theta Precision Radius :mod:`abelfunctions.riemanntheta.radius`
 =======================================================================
 

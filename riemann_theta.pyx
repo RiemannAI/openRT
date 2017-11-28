@@ -1,4 +1,4 @@
-# cython: profile=True
+# cython: language_level=2
 r"""Riemann Theta Function :mod:`abelfunctions.riemann_theta.riemann_theta`
 =======================================================================
 
