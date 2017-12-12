@@ -1,9 +1,10 @@
 # openRT
 
-OpenRT is based on the [abelfunctions](https://github.com/abelfunctions/abelfunctions) package for sage where we:
-- removes the sage dependency
-- enable python 3 support
-- perform several adjustments to speedup the RT evaluations required by [RiemannAI/theta](https://github.com/RiemannAI/theta).
+OpenRT provides a stand-alone implementation of the Riemann-Theta (RT) function. It is sourced from the [abelfunctions](https://github.com/abelfunctions/abelfunctions) package for sage with the following changes:
+
+- sage dependency removed
+- python 3 support added
+- several improvements to speedup the RT evaluations required by [RiemannAI/theta](https://github.com/RiemannAI/theta).
 
 # Installing
 
