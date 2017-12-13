@@ -91,8 +91,8 @@ cdef extern from "header.h":
     void finite_sum_with_multi_derivatives_phaseII(double*, double*,
                                      double*, double*, double*, double*,
                                      double*, double*, int*, int, int, int, int)
-    
-    
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
@@ -139,7 +139,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
     Omega = numpy.array(Omega, dtype=numpy.complex)
     Y = Omega.imag
     X = numpy.ascontiguousarray(Omega.real)
-   
+
     if(Y.shape[0]!=1):
         _T = numpy.linalg.cholesky(Y).T
     else:
@@ -151,8 +151,8 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
-        
-  
+
+
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
     if isinstance(derivs, list):
@@ -356,15 +356,15 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
         _T = numpy.linalg.cholesky(Y).T
     else:
         _T = numpy.sqrt(Y)
-        
+
     T = numpy.ascontiguousarray(_T)
 
     if(mode!=2):
         Yinv = numpy.ascontiguousarray(numpy.linalg.inv(Y))
     else:
         Yinv = numpy.ascontiguousarray(numpy.zeros(Y.shape))
-        
-    
+
+
     # compute the integer points over which we approximate the infinite sum to
     # the requested accuracy
     if isinstance(derivs, list):
@@ -535,9 +535,9 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
         return output
 
-    
-    
-    
+
+
+
 cdef class RiemannTheta_Function(object):
     r"""The Riemann theta function.
 
@@ -554,8 +554,12 @@ cdef class RiemannTheta_Function(object):
     oscillatory_part_gradient
     gradient
     oscillatory_part_hessian
+    normalized_oscillatory_part
     eval
     log_eval
+    parts_eval
+    normalized_eval
+    ratio_eval
 
     """
     def __init__(self, accuracy_radius=5):
@@ -625,7 +629,7 @@ cdef class RiemannTheta_Function(object):
             u = self.exponential_part(z, Omega, **kwds)
         else:
             u = 0
-            
+
         v = self.oscillatory_part(z, Omega, mode, **kwds)
 
         return u + numpy.log(v)
@@ -663,9 +667,9 @@ cdef class RiemannTheta_Function(object):
             The value of the log Riemann theta function at each `g`-component vector
             appearing in `z`.
         """
-        
+
         v = self.normalized_oscillatory_part(z, Omega, mode, **kwds)
-       
+
         return v
 
 
@@ -679,8 +683,8 @@ cdef class RiemannTheta_Function(object):
         else:
             u_A = 0
             u_B = 0
-            
-            
+
+
         v_A = self.oscillatory_part(z_A, Omega_A, mode, **kwds)
         # do not compute derivatives for B
         kwds['derivs'] = []
@@ -688,8 +692,8 @@ cdef class RiemannTheta_Function(object):
 
         return numpy.exp(u_A-u_B)*(v_A/v_B)
 
-    
-    
+
+
     def exponential_part(self, z, Omega, axis=1, **kwds):
         r"""Returns the exponential part of the Riemann theta function.
 
@@ -815,8 +819,8 @@ cdef class RiemannTheta_Function(object):
         """
         return normalized_oscillatory_part(z, Omega, mode, epsilon, derivs,
                                 accuracy_radius, axis)
-    
-    
+
+
     def oscillatory_part_gradient(self, z, Omega, mode=0, epsilon=1e-8,
                                   accuracy_radius=5, axis=1, **kwds):
         r"""Returns the oscillatory part of the gradient of Riemann theta.
