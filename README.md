@@ -8,7 +8,12 @@ OpenRT provides a stand-alone implementation of the Riemann-Theta (RT) function.
 
 # Installing
 
-After cloning the repository compile the cython code with:
+This package is a submodule of [RiemannAI/theta](https://github.com/RiemannAI/theta) so in order have access to the Riemann-Theta functions with python2/3 we suggest to follow the installation instructions from that project and them import:
+```python
+from theta.riemann_theta.riemann_theta import RiemannTheta
+```
+
+Otherwise, with python2.7 you can compile the code in place with:
 
 ```shell
 python setup.py build_ext --inplace
