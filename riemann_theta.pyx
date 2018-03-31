@@ -230,14 +230,14 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
                 # get the derivatives
                 if len(value):
+                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
+                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+                    N = S.shape[0]
+
                     value = numpy.array(value, dtype=numpy.complex).flatten()
                     nderivs = len(value) / g
                     derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
                     derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
-
-                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
-                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
-                    N = S.shape[0]
 
                     # set up storage locations and vectors
                     values = numpy.zeros(num_vectors, dtype=numpy.complex)
@@ -273,10 +273,10 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
             N = S.shape[0]
 
             # set up storage locations and vectors
-            n_derivs = numpy.ascontiguousarray([len(item) for item in derivs], dtype=numpy.int32)
+            n_derivs = numpy.ascontiguousarray([numpy.array(item).flatten().shape[0] for item in derivs], dtype=numpy.int32)
             inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex)
-            derivs_real = numpy.ascontiguousarray(inderivs.real, dtype=numpy.double)
-            derivs_imag = numpy.ascontiguousarray(inderivs.imag, dtype=numpy.double)
+            derivs_real = numpy.ascontiguousarray(inderivs.real.flatten(), dtype=numpy.double)
+            derivs_imag = numpy.ascontiguousarray(inderivs.imag.flatten(), dtype=numpy.double)
 
             real = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
             imag = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
@@ -452,14 +452,14 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
             for i, value in enumerate(derivs):
                 # get the derivatives
                 if len(value):
+                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
+                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
+                    N = S.shape[0]
+
                     value = numpy.array(value, dtype=numpy.complex).flatten()
                     nderivs = len(value) / g
                     derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
                     derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
-
-                    R = radius(epsilon, _T, derivs=value, accuracy_radius=accuracy_radius)
-                    S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
-                    N = S.shape[0]
 
                     # set up storage locations and vectors
                     values = numpy.zeros(num_vectors, dtype=numpy.complex)
@@ -504,10 +504,10 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
             N = S.shape[0]
 
             # set up storage locations and vectors
-            n_derivs = numpy.ascontiguousarray([len(item) for item in derivs], dtype=numpy.int32)
+            n_derivs = numpy.ascontiguousarray([numpy.array(item).flatten().shape[0] for item in derivs], dtype=numpy.int32)
             inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex)
-            derivs_real = numpy.ascontiguousarray(inderivs.real, dtype=numpy.double)
-            derivs_imag = numpy.ascontiguousarray(inderivs.imag, dtype=numpy.double)
+            derivs_real = numpy.ascontiguousarray(inderivs.real.flatten(), dtype=numpy.double)
+            derivs_imag = numpy.ascontiguousarray(inderivs.imag.flatten(), dtype=numpy.double)
 
             real = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
             imag = <double*>malloc(sizeof(double)*num_vectors*derivs.shape[0])
