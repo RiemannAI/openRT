@@ -104,10 +104,10 @@ def radius(epsilon, T, derivs=[], accuracy_radius=5):
         Riemann theta function to desired accuracy.
 
     """
-    # compute the LLL-reduction of T
+    # compute the LLL-reduction of sqrt(pi)*T
     T = numpy.array(T, dtype=numpy.double)
     g = T.shape[0]
-    U = lll(T)
+    U = lll(sqrt(numpy.pi)*T)
     r = min(norm(U[:,i]) for i in range(g))
 
     if len(derivs) == 0:
@@ -131,7 +131,8 @@ def radius0(eps, r, g):
         Requested accuracy.
     r : double
         The length of the shortest lattice vector in the LLL reduction of the
-        Cholesky decomposition of the imaginary part of the Riemann matrix.
+        Cholesky decomposition of the imaginary part of the Riemann matrix
+        times sqrt(pi).
     g : int
         The genus / problem size.
 
@@ -142,7 +143,7 @@ def radius0(eps, r, g):
         Riemann theta function to desired accuracy.
 
     """
-    lhs = eps * (2./g) * (r/2.)**g * gamma(g/2.)
+    lhs = eps * (2./g) * (r/2.)**g / gamma(g/2.)
     ins = gammainccinv(g/2.,lhs)
     R = sqrt(ins) + r/2.
     S = (sqrt(2.*g)+r)/2.
@@ -159,7 +160,8 @@ def radiusN(eps, r, g, T, derivs, accuracy_radius=5):
         Requested accuracy.
     r : double
         The length of the shortest lattice vector in the LLL reduction of the
-        Cholesky decomposition of the imaginary part of the Riemann matrix.
+        Cholesky decomposition of the imaginary part of the Riemann matrix
+        times sqrt(pi).
     g : int
         The genus / problem size.
     T : matrix
@@ -229,7 +231,7 @@ def radius1(eps, r, g, T, deriv, accuracy_radius=5):
     lhs = (eps*(r/2.)**g) / (sqrt(pi)*g*normderiv*normTinv)
 
     # define lower bound (guess) and attempt to solve for the radius
-    lbnd = sqrt(g+2+sqrt(g**2+8)) + r
+    lbnd = (sqrt(g+2+sqrt(g**2+8)) + r)/2.
     def rhs(ins):
         A = gamma((g+1)/2.) * gammaincc((g+1)/2., ins)
         B = sqrt(pi) * normTinv * L * gamma(g/2.) * gammaincc(g/2., ins)
