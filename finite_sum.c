@@ -1014,6 +1014,12 @@ extern "C" {
       deriv_real[d] = &deriv_real_in[offset];
       deriv_imag[d] = &deriv_imag_in[offset];
       offset += n_derivs[d];
+
+      // Empty
+      for (int kk = 0; kk < num_vectors; kk++) {
+        fsum_real[kk + d*num_vectors] = 0;
+        fsum_imag[kk + d*num_vectors] = 0;
+      }
     }
 
     // Loop over dataset
@@ -1214,6 +1220,12 @@ extern "C" {
       deriv_real[d] = &deriv_real_in[offset];
       deriv_imag[d] = &deriv_imag_in[offset];
       offset += n_derivs[d];
+
+      // Empty
+      for (int kk = 0; kk < num_vectors; kk++) {
+        fsum_real[kk + d*num_vectors] = 0;
+        fsum_imag[kk + d*num_vectors] = 0;
+      }
     }
 
     // Loop over dataset

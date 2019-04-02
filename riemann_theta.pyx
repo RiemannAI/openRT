@@ -51,8 +51,8 @@ cimport cython
 import numpy
 
 from libc.stdlib cimport malloc, free
-from radius import radius
-from integer_points import integer_points_python
+from .radius import radius
+from .integer_points import integer_points_python
 
 cdef extern from "header.h":
     void finite_sum_without_derivatives(double*, double*, double*,
