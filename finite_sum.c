@@ -707,7 +707,7 @@ extern "C" {
 
 	  // compute the "cosine" and "sine" parts of the summand
 	  ept = exppart(n, X, x, intshift, g);
-	  npt = exp(normpart_phaseI(n, T, fracshift, g));
+	  npt = exp(normpart(n, T, fracshift, g));
 	  cpt = npt * cos(ept);
 	  spt = npt * sin(ept);
 	  deriv_prod(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
@@ -778,7 +778,7 @@ extern "C" {
 
 	  // compute the "cosine" and "sine" parts of the summand
 
-	  npt = exp(normpart(n, T, fracshift, g));
+	  npt = exp(normpart_phaseI(n, T, fracshift, g));
 
 	  deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
 
@@ -904,7 +904,7 @@ extern "C" {
 
 	  // compute the "cosine" and "sine" parts of the summand
 
-	  npt = exp(normpart(n, T, fracshift, g));
+	  npt = exp(normpart_phaseI(n, T, fracshift, g));
 
 	  deriv_prod_phaseI(dpr, dpi, n, intshift, deriv_real, deriv_imag, nderivs, g);
 
@@ -1062,7 +1062,7 @@ extern "C" {
 
 	  n = S + k*g;
 
-	  npt = exp(normpart(n, T, fracshift, g));
+	  npt = exp(normpart_phaseI(n, T, fracshift, g));
 	  real_total_den += npt;
 
 	  for (int d = 0; d < numderivs; d++)
@@ -1258,7 +1258,7 @@ extern "C" {
 
 	  n = S + k*g;
 
-	  npt = exp(normpart(n, T, fracshift, g));
+	  npt = exp(normpart_phaseI(n, T, fracshift, g));
 
 	  for (int d = 0; d < numderivs; d++)
 	    {
