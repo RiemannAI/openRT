@@ -124,7 +124,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
     # coerce z to a numpy array and determine the problem size: the genus g and
     # the number of vectors to compute
-    z = numpy.array(z, dtype=numpy.complex)
+    z = numpy.array(z, dtype=numpy.complex64)
     if len(z.shape) == 1:
         num_vectors = 1
         g = len(z)
@@ -136,7 +136,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
     # coerce Omega to a numpy array and extract the requested information: the
     # real part, inverse of the imaginary part, and the cholesky decomposition
     # of the imaginary part
-    Omega = numpy.array(Omega, dtype=numpy.complex)
+    Omega = numpy.array(Omega, dtype=numpy.complex64)
     Y = Omega.imag
     X = numpy.ascontiguousarray(Omega.real)
 
@@ -164,14 +164,14 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
         # set up storage locations and vectors
         real = <double*>malloc(sizeof(double)*num_vectors)
         imag = <double*>malloc(sizeof(double)*num_vectors)
-        values = numpy.zeros(num_vectors, dtype=numpy.complex)
+        values = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
         x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
         y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
 
         # get the derivatives
         if len(derivs):
-            derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
+            derivs = numpy.array(derivs, dtype=numpy.complex64).flatten()
             nderivs = len(derivs) / g
             derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
             derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
@@ -207,7 +207,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
 
         for k in range(num_vectors):
-            values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+            values[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
         free(real)
         free(imag)
@@ -219,7 +219,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
     else:
 
-        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex64)
 
         if mode == 0:
 
@@ -234,13 +234,13 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
                     S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
                     N = S.shape[0]
 
-                    value = numpy.array(value, dtype=numpy.complex).flatten()
+                    value = numpy.array(value, dtype=numpy.complex64).flatten()
                     nderivs = len(value) / g
                     derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
                     derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
 
                     # set up storage locations and vectors
-                    values = numpy.zeros(num_vectors, dtype=numpy.complex)
+                    values = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
                     x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
                     y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
@@ -252,7 +252,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
                                                 &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
 
                     for k in range(num_vectors):
-                        values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                        values[k] = numpy.complex64(real[k] + 1.0j*imag[k])
                 else:
                     free(real)
                     free(imag)
@@ -274,7 +274,7 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
             # set up storage locations and vectors
             n_derivs = numpy.ascontiguousarray([numpy.array(item).flatten().shape[0] for item in derivs], dtype=numpy.int32)
-            inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex)
+            inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex64)
             derivs_real = numpy.ascontiguousarray(inderivs.real.flatten(), dtype=numpy.double)
             derivs_imag = numpy.ascontiguousarray(inderivs.imag.flatten(), dtype=numpy.double)
 
@@ -294,10 +294,10 @@ def oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius, axis):
 
             for i in range(derivs.shape[0]):
                     if num_vectors == 1:
-                        output[i] = numpy.complex(real[i] + 1.0j*imag[i])
+                        output[i] = numpy.complex64(real[i] + 1.0j*imag[i])
                     else:
                         for k in range(num_vectors):
-                            output[i, k] = numpy.complex(real[k+i*num_vectors] + 1.0j*imag[k+i*num_vectors])
+                            output[i, k] = numpy.complex64(real[k+i*num_vectors] + 1.0j*imag[k+i*num_vectors])
 
             free(real)
             free(imag)
@@ -336,7 +336,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
     # coerce z to a numpy array and determine the problem size: the genus g and
     # the number of vectors to compute
-    z = numpy.array(z, dtype=numpy.complex)
+    z = numpy.array(z, dtype=numpy.complex64)
     if len(z.shape) == 1:
         num_vectors = 1
         g = len(z)
@@ -348,7 +348,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
     # coerce Omega to a numpy array and extract the requested information: the
     # real part, inverse of the imaginary part, and the cholesky decomposition
     # of the imaginary part
-    Omega = numpy.array(Omega, dtype=numpy.complex)
+    Omega = numpy.array(Omega, dtype=numpy.complex64)
     Y = Omega.imag
     X = numpy.ascontiguousarray(Omega.real)
 
@@ -377,22 +377,22 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
         real = <double*>malloc(sizeof(double)*num_vectors)
         imag = <double*>malloc(sizeof(double)*num_vectors)
 
-        values = numpy.zeros(num_vectors, dtype=numpy.complex)
+        values = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
         x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
         y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
 
         # get the derivatives
         if len(derivs):
-            derivs = numpy.array(derivs, dtype=numpy.complex).flatten()
+            derivs = numpy.array(derivs, dtype=numpy.complex64).flatten()
             nderivs = len(derivs) / g
             derivs_real = numpy.ascontiguousarray(derivs.real, dtype=numpy.double)
             derivs_imag = numpy.ascontiguousarray(derivs.imag, dtype=numpy.double)
 
             # compute the finite sum for each z-vector
             if(mode==0):
-                values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
-                values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
+                values_nom = numpy.zeros(num_vectors, dtype=numpy.complex64)
+                values_den = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
                 finite_sum_with_derivatives(real, imag,
                                             &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
@@ -400,12 +400,12 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                                             &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
 
                 for k in range(num_vectors):
-                    values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                    values_nom[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
                 finite_sum_without_derivatives(real, imag,
                                                &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
                 for k in range(num_vectors):
-                    values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                    values_den[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
                 values = values_nom/values_den
 
@@ -416,7 +416,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                                             &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
 
                 for k in range(num_vectors):
-                    values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                    values[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
             elif(mode==2):
                 finite_sum_with_derivatives_normalized_phaseII(real, imag,
@@ -425,7 +425,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                                             &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
 
                 for k in range(num_vectors):
-                    values[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                    values[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
         else:
             return numpy.ones(z.shape);
@@ -441,7 +441,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
     else:
 
-        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex)
+        output = numpy.zeros(shape=(derivs.shape[0], num_vectors), dtype=numpy.complex64)
 
         # compute the finite sum for each z-vector
         if mode == 0:
@@ -456,19 +456,19 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                     S = numpy.ascontiguousarray(integer_points_python(g,R,_T))
                     N = S.shape[0]
 
-                    value = numpy.array(value, dtype=numpy.complex).flatten()
+                    value = numpy.array(value, dtype=numpy.complex64).flatten()
                     nderivs = len(value) / g
                     derivs_real = numpy.ascontiguousarray(value.real, dtype=numpy.double)
                     derivs_imag = numpy.ascontiguousarray(value.imag, dtype=numpy.double)
 
                     # set up storage locations and vectors
-                    values = numpy.zeros(num_vectors, dtype=numpy.complex)
+                    values = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
                     x = numpy.ascontiguousarray(z.real, dtype=numpy.double)
                     y = numpy.ascontiguousarray(z.imag, dtype=numpy.double)
 
-                    values_nom = numpy.zeros(num_vectors, dtype=numpy.complex)
-                    values_den = numpy.zeros(num_vectors, dtype=numpy.complex)
+                    values_nom = numpy.zeros(num_vectors, dtype=numpy.complex64)
+                    values_den = numpy.zeros(num_vectors, dtype=numpy.complex64)
 
                     finite_sum_with_derivatives(real, imag,
                                                 &X[0,0], &Yinv[0,0], &T[0,0],&x[0],
@@ -476,12 +476,12 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
                                                 &derivs_real[0], &derivs_imag[0],nderivs, g, N, num_vectors)
 
                     for k in range(num_vectors):
-                        values_nom[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                        values_nom[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
                     finite_sum_without_derivatives(real, imag,
                                                    &x[0], &y[0], &X[0,0],&Yinv[0,0], &T[0,0], &S[0,0],g, N, num_vectors)
                     for k in range(num_vectors):
-                        values_den[k] = numpy.complex(real[k] + 1.0j*imag[k])
+                        values_den[k] = numpy.complex64(real[k] + 1.0j*imag[k])
 
                     values = values_nom/values_den
 
@@ -505,7 +505,7 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
             # set up storage locations and vectors
             n_derivs = numpy.ascontiguousarray([numpy.array(item).flatten().shape[0] for item in derivs], dtype=numpy.int32)
-            inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex)
+            inderivs = numpy.array([item for sublist in derivs for item in sublist], dtype=numpy.complex64)
             derivs_real = numpy.ascontiguousarray(inderivs.real.flatten(), dtype=numpy.double)
             derivs_imag = numpy.ascontiguousarray(inderivs.imag.flatten(), dtype=numpy.double)
 
@@ -525,10 +525,10 @@ def normalized_oscillatory_part(z, Omega, mode, epsilon, derivs, accuracy_radius
 
             for i in range(derivs.shape[0]):
                     if num_vectors == 1:
-                        output[i] = numpy.complex(real[i] + 1.0j*imag[i])
+                        output[i] = numpy.complex64(real[i] + 1.0j*imag[i])
                     else:
                         for k in range(num_vectors):
-                            output[i, k] = numpy.complex(real[k+i*num_vectors] + 1.0j*imag[k+i*num_vectors])
+                            output[i, k] = numpy.complex64(real[k+i*num_vectors] + 1.0j*imag[k+i*num_vectors])
 
             free(real)
             free(imag)
@@ -724,8 +724,8 @@ cdef class RiemannTheta_Function(object):
         # of Omega
         if len(numpy.shape(z)) == 1:
             z = [z]
-        z = numpy.array(z, dtype=numpy.complex)
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        z = numpy.array(z, dtype=numpy.complex64)
+        Omega = numpy.array(Omega, dtype=numpy.complex64)
         y = z.imag
         Yinv = numpy.linalg.inv(Omega.imag)
 
@@ -843,9 +843,9 @@ cdef class RiemannTheta_Function(object):
             gradient is listed along `axis`.
         """
         # get the genus and number of z-vectors
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        Omega = numpy.array(Omega, dtype=numpy.complex64)
         g = Omega.shape[0]
-        gradients = numpy.zeros_like(z, dtype=numpy.complex)
+        gradients = numpy.zeros_like(z, dtype=numpy.complex64)
 
         for i in range(g):
             # construct the direction derivative \partial z_i and compute the
@@ -938,14 +938,14 @@ cdef class RiemannTheta_Function(object):
             Hessian is indexed by the 0th coordinate.
         """
         # get the genus and number of z-vectors
-        Omega = numpy.array(Omega, dtype=numpy.complex)
+        Omega = numpy.array(Omega, dtype=numpy.complex64)
         g = Omega.shape[0]
-        z = numpy.array(z, dtype=numpy.complex)
+        z = numpy.array(z, dtype=numpy.complex64)
         if len(z.shape) == 1:
             n = 1
         else:
             n = z.shape[(axis+1) % 2]
-        hessians = numpy.zeros((n,g,g), dtype=numpy.complex)
+        hessians = numpy.zeros((n,g,g), dtype=numpy.complex64)
 
         # since Riemann theta is analytic we only need to compute the lower
         # triangular portion of the Hessian and symmetrize
